@@ -18,7 +18,7 @@ type ProcStat struct {
 
 // returns the status as an int word
 func (p ProcStat) getProcessorStatus() (pstatus int) {
-	pstatus = c | z << 1 | i << 2 | d << 3 | b << 4 | v << 6 | n << 7
+	pstatus = p.c | p.z << 1 | p.i << 2 | p.d << 3 | p.b << 4 | p.v << 6 | p.n << 7
 	return
 }
 
@@ -1368,7 +1368,7 @@ func (cpu *Cpu) rorm(addr int) {
 }
 
 func (cpu *Cpu) rti() {
-	var l, h
+	var l, h int
 
 	cpu.sp--
 	cpu.p = mem.read(cpu.sp)
@@ -1381,7 +1381,7 @@ func (cpu *Cpu) rti() {
 }
 
 func (cpu *Cpu) rts() {
-	var l, h
+	var l, h int
 
 	cpu.sp++
 	l = cpu.mem.read(cpu.sp)
@@ -1400,7 +1400,7 @@ func (cpu *Cpu) sbc(int addr) {
 		// When using SBC, the code should have used SEC to set the carry
 		// before. This is to make sure that, if we need to borrow, there is
 		// something to borrow.
-		var negcarry
+		var negcarry int
 		if cpu.p.c&BIT_0 != 0 {
 			negcarry = 0
 		} else {
@@ -1414,7 +1414,7 @@ func (cpu *Cpu) sbc(int addr) {
 			cpu.p.v = 0
 		}
 	} else {
-		var negcarry
+		var negcarry int
 		if cpu.p.c&BIT_0 != 0 {
 			negcarry = 0
 		} else {
