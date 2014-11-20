@@ -16,6 +16,12 @@ type ProcStat struct {
 	c, z, i, d, b, n, v int
 }
 
+// returns the status as an int word
+func (p ProcStat) getProcessorStatus() (pstatus int) {
+	pstatus = c | z << 1 | i << 2 | d << 3 | b << 4 | v << 6 | n << 7
+	return
+}
+
 // the memory is basically an array with
 // fixed size (64K)
 // TODO: reader/writer
@@ -1263,7 +1269,7 @@ func (cpu *Cpu) rola() {
 
 	// Take from the byte what will be the future carry
 	var t
-	if cpu.ac&BIT_7 != 0 {
+	if cpu.ac & BIT_7 != 0 {
 		t = 1
 	} else {
 		t = 0
