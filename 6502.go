@@ -1504,6 +1504,8 @@ func (cpu *Cpu) txs() {
 	cpu.sp = cpu.x
 }
 
+// TODO: implement addressing modes here
+
 // helper functions
 
 // returns the bcd equivalent of the given number
