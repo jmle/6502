@@ -3,10 +3,10 @@ package main
 // the main struct, containing the main registers,
 // the processor's status and the memory
 type Cpu struct {
-	pc, sp, ac, x, y 	int
-	pbCrossed 			bool
-	p 					ProcStat
-	mem 				Mem
+	pc, sp, ac, x, y	int
+	pbCrossed			bool
+	p					ProcStat
+	mem					Mem
 }
 
 // the status flags of the processor
