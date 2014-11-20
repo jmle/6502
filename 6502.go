@@ -1268,7 +1268,7 @@ func (cpu *Cpu) rola() {
 	// according to the MSB of the rolled byte
 
 	// Take from the byte what will be the future carry
-	var t
+	var t int
 	if cpu.ac & BIT_7 != 0 {
 		t = 1
 	} else {
@@ -1288,7 +1288,7 @@ func (cpu *Cpu) rola() {
 
 func (cpu *Cpu) rolm(addr int) {
 	data := cpu.mem.read(addr)
-	var t
+	var t int
 	if data&BIT_7 != 0 {
 		t = 1
 	} else {
@@ -1314,7 +1314,7 @@ func (cpu *Cpu) rora() {
 	// according to the LSB of the rolled byte
 
 	// Take from the byte what will be the future carry
-	var t
+	var t int
 	if ac&BIT_0 != 0 {
 		t = 1
 	} else {
@@ -1340,7 +1340,7 @@ func (cpu *Cpu) rora() {
 
 func (cpu *Cpu) rorm(addr int) {
 	data := cpu.mem.read(addr)
-	var t
+	var t int
 	if data&BIT_0 != 0 {
 		t = 1
 	} else {
@@ -1394,7 +1394,7 @@ func (cpu *Cpu) rts() {
 func (cpu *Cpu) sbc(int addr) {
 	data := cpu.mem.read(addr)
 
-	var t
+	var t int
 	// If decimal mode is on...
 	if cpu.p.d == 1 {
 		// When using SBC, the code should have used SEC to set the carry
