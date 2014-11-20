@@ -17,7 +17,8 @@ type ProcStat struct {
 }
 
 // the memory is basically an array with
-// fixed size (64K)
+// fixed size (64K) 
+// TODO: reader/writer
 type Mem struct {
 	m 		[1 << 16]int
 }
@@ -27,30 +28,35 @@ func (mem *Mem) read(i int) (value int) {
 	return
 }
 
+func (mem *Mem) write(addr, i int) {
+	mem.m[addr] = i
+}
+
 func (cpu *Cpu) execute() (resCycles int) {
 	// grab current instruction and increment pc
-	inst := cpu.mem.mem[cpu.pc]
+	inst := cpu.mem.read(cpu.pc)
 	cpu.pc++
 
 	switch inst {
 	case 0x69:
-        adc(imm())
+		// TODO: these are methods now, not functions, like this:
+        cpu.adc(cpu.imm())
         resCycles = 2
 
     case 0x65:
-        adc(zp())
+        cpu.adc(cpu.zp())
         resCycles = 3
 
     case 0x75:
-        adc(zpx())
+        cpu.adc(cpu.zpx())
         resCycles = 4
 
     case 0x6D:
-        adc(abs())
+        cpu.adc(cpu.abs())
         resCycles = 4
 
     case 0x7D:
-        adc(abx())
+        cpu.adc(cpu.abx())
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -58,7 +64,7 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0x79:
-        adc(aby())
+        cpu.adc(cpu.aby())
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -66,11 +72,11 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0x61:
-        adc(indx())
+        cpu.adc(cpu.indx())
         resCycles = 6
 
     case 0x71:
-        adc(indy())
+        cpu.adc(cpu.indy())
         if cpu.pbCrossed {
         	resCycles = 6
         } else {
@@ -79,23 +85,23 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // AND's
     case 0x29:
-        and(imm())
+        cpu.and(cpu.imm())
         resCycles = 2
 
     case 0x25:
-        and(zp())
+        cpu.and(cpu.zp())
         resCycles = 2
 
     case 0x35:
-        and(zpx())
+        cpu.and(cpu.zpx())
         resCycles = 3
 
     case 0x2D:
-        and(abs())
+        cpu.and(cpu.abs())
         resCycles = 4
 
     case 0x3D:
-        and(abx())
+        cpu.and(cpu.abx())
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -103,7 +109,7 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0x39:
-        and(aby())
+        cpu.and(cpu.aby())
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -111,11 +117,11 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0x21:
-        and(indx())
+        cpu.and(cpu.indx())
         resCycles = 6
 
     case 0x31:
-        and(indy())
+        cpu.and(cpu.indy())
         if cpu.pbCrossed {
         	resCycles = 6
         } else {
@@ -124,28 +130,28 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // ASL's
     case 0x0A:
-        asla()
+        cpu.aslacpu.()
         resCycles = 2
 
     case 0x06:
-        asl(zp())
+        cpu.asl(cpu.zp())
         resCycles = 5
 
     case 0x16:
-        asl(zpx())
+        cpu.asl(cpu.zpx())
         resCycles = 6
 
     case 0x0E:
-        asl(abs())
+        cpu.asl(cpu.abs())
         resCycles = 6
 
     case 0x1E:
-        asl(abx())
+        cpu.asl(cpu.abx())
         resCycles = 7
 
     // BCC
     case 0x90:
-    	if bcc(rel()) {
+    	if cpu.bcc(cpu.rel()) {
     		if cpu.pbCrossed {
     			resCycles = 4
     		} else {
@@ -157,7 +163,7 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // BCS
     case 0xB0:
-    	if bcs(rel()) {
+    	if cpu.bcs(cpu.rel()) {
     		if cpu.pbCrossed {
     			resCycles = 4
     		} else {
@@ -169,7 +175,7 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // BEQ
     case 0xF0:
-    	if beq(rel()) {
+    	if cpu.beq(cpu.rel()) {
     		if cpu.pbCrossed {
     			resCycles = 4
     		} else {
@@ -181,16 +187,16 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // BIT
     case 0x24:
-        bit(zp())
+        cpu.bit(cpu.zp())
         resCycles = 3
 
     case 0x2C:
-        bit(abs())
+        cpu.bit(cpu.abs())
         resCycles = 4
 
     // BMI
     case 0x30:
-    	if bmi(rel()) {
+    	if cpu.bmi(cpu.rel()) {
     		if cpu.pbCrossed {
     			resCycles = 4
     		} else {
@@ -202,7 +208,7 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // BNE
     case 0xD0:
-    	if bne(rel()) {
+    	if cpu.bne(cpu.rel()) {
     		if cpu.pbCrossed {
     			resCycles = 4
     		} else {
@@ -214,7 +220,7 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // BPL
     case 0x10:
-    	if bpl(rel()) {
+    	if cpu.bpl(cpu.rel()) {
     		if cpu.pbCrossed {
     			resCycles = 4
     		} else {
@@ -226,12 +232,12 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // BRK
     case 0x00:
-        brk()
+        cpu.brk(cpu.)
         resCycles = 7
 
     // BVC
     case 0x50:
-    	if bvc(rel()) {
+    	if cpu.bvc(cpu.rel()) {
     		if cpu.pbCrossed {
     			resCycles = 4
     		} else {
@@ -243,7 +249,7 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // BVS
     case 0x70:
-    	if bvs(rel()) {
+    	if cpu.bvs(cpu.rel()) {
     		if cpu.pbCrossed {
     			resCycles = 4
     		} else {
@@ -254,39 +260,39 @@ func (cpu *Cpu) execute() (resCycles int) {
     	}
 
     case 0x18:
-        clc()
+        cpu.clc(cpu.)
         resCycles = 2
 
     case 0xD8:
-        cld()
+        cpu.cld(cpu.)
         resCycles = 2
 
     case 0x58:
-        cli()
+        cpu.cli(cpu.)
         resCycles = 2
 
     case 0xB8:
-        clv()
+        cpu.clv(cpu.)
         
     // CMP
     case 0xC9:
-        cmp(imm(), R.A)
+        cpu.cmp(cpu.imm(), R.A)
         resCycles = 2
 
     case 0xC5:
-        cmp(zp(), R.A)
+        cpu.cmp(cpu.zp(), R.A)
         resCycles = 3
 
     case 0xD5:
-        cmp(zpx(), R.A)
+        cpu.cmp(cpu.zpx(), R.A)
         resCycles = 4
 
     case 0xCD:
-        cmp(abs(), R.A)
+        cpu.cmp(cpu.abs(), R.A)
         resCycles = 4
 
     case 0xDD:
-        cmp(abx(), R.A)
+        cpu.cmp(cpu.abx(), R.A)
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -294,7 +300,7 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0xD9:
-        cmp(aby(), R.A)
+        cpu.cmp(cpu.aby(), R.A)
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -302,11 +308,11 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0xC1:
-        cmp(indx(), R.A)
+        cpu.cmp(cpu.indx(), R.A)
         resCycles = 6
 
     case 0xD1:
-        cmp(indy(), R.A)
+        cpu.cmp(cpu.indy(), R.A)
         if cpu.pbCrossed {
         	resCycles = 6
         } else {
@@ -315,76 +321,76 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // CPX
     case 0xE0:
-        cmp(imm(), R.X)
+        cpu.cmp(cpu.imm(), R.X)
         resCycles = 2
 
     case 0xE4:
-        cmp(zp(), R.X)
+        cpu.cmp(cpu.zp(), R.X)
         resCycles = 3
 
     case 0xEC:
-        cmp(abs(), R.X)
+        cpu.cmp(cpu.abs(), R.X)
         resCycles = 4
 
     // CPY
     case 0xC0:
-        cmp(imm(), R.Y)
+        cpu.cmp(cpu.imm(), R.Y)
         resCycles = 2
 
     case 0xC4:
-        cmp(zp(), R.Y)
+        cpu.cmp(cpu.zp(), R.Y)
         resCycles = 3
 
     case 0xCC:
-        cmp(abs(), R.Y)
+        cpu.cmp(cpu.abs(), R.Y)
         resCycles = 4
 
     // DEC
     case 0xC6:
-        dec(zp())
+        cpu.dec(cpu.zp())
         resCycles = 5
 
     case 0xD6:
-        dec(zpx())
+        cpu.dec(cpu.zpx())
         resCycles = 6
 
     case 0xCE:
-        dec(abs())
+        cpu.dec(cpu.abs())
         resCycles = 6
 
     case 0xDE:
-        dec(abx())
+        cpu.dec(cpu.abx())
         resCycles = 7
 
     // DEX
     case 0xCA:
-        decxy(R.X)
+        cpu.decxy(R.X)
         resCycles = 2
 
     // DEY
     case 0x88:
-        decxy(R.Y)
+        cpu.decxy(R.Y)
         resCycles = 2
 
     // EOR
     case 0x49:
-        eor(imm())
+        cpu.eor(cpu.imm())
         resCycles = 2
 
     case 0x45:
-        eor(zp())
+        cpu.eor(cpu.zp())
         resCycles = 3
 
     case 0x55:
-        eor(zpx())
+        cpu.eor(cpu.zpx())
         resCycles = 4
 
     case 0x4D:
-        eor(abs())
+        cpu.eor(cpu.abs())
         resCycles = 4
 
     case 0x5D:
-        eor(abx())
+        cpu.eor(cpu.abx())
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -392,7 +398,7 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0x59:
-        eor(aby())
+        cpu.eor(cpu.aby())
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -400,11 +406,11 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0x41:
-        eor(indx())
+        cpu.eor(cpu.indx())
         resCycles = 6
 
     case 0x51:
-        eor(indy())
+        cpu.eor(cpu.indy())
         if cpu.pbCrossed {
         	resCycles = 6
         } else {
@@ -413,64 +419,64 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // INC
     case 0xE6:
-        inc(zp())
+        cpu.inc(cpu.zp())
         resCycles = 5
 
     case 0xF6:
-        inc(zpx())
+        cpu.inc(cpu.zpx())
         resCycles = 6
 
     case 0xEE:
-        inc(abs())
+        cpu.inc(cpu.abs())
         resCycles = 6
 
     case 0xFE:
-        inc(abx())
+        cpu.inc(cpu.abx())
         resCycles = 7
 
     // INX
     case 0xE8:
-        incxy(R.X)
+        cpu.incxy(R.X)
         resCycles = 2
 
     // INY
     case 0xC8:
-        incxy(R.Y)
+        cpu.incxy(R.Y)
         resCycles = 2
 
     // JMP
     case 0x4C:
-        jmp(abs())
+        cpu.jmp(cpu.abs())
         resCycles = 3
 
     case 0x6C:
-        jmp(ind())
+        cpu.jmp(cpu.ind())
         resCycles = 5
 
     // JSR
     case 0x20:
-        jsr(abs())
+        cpu.jsr(cpu.abs())
         resCycles = 6
 
     // LDA
     case 0xA9:
-        ldr(imm(), R.A)
+        cpu.ldr(cpu.imm(), R.A)
         resCycles = 2
 
     case 0xA5:
-        ldr(zp(), R.A)
+        cpu.ldr(cpu.zp(), R.A)
         resCycles = 3
 
     case 0xB5:
-        ldr(zpx(), R.A)
+        cpu.ldr(cpu.zpx(), R.A)
         resCycles = 4
 
     case 0xAD:
-        ldr(abs(), R.A)
+        cpu.ldr(cpu.abs(), R.A)
         resCycles = 4
 
     case 0xBD:
-        ldr(abx(), R.A)
+        cpu.ldr(cpu.abx(), R.A)
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -478,7 +484,7 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0xB9:
-        ldr(aby(), R.A)
+        cpu.ldr(cpu.aby(), R.A)
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -486,11 +492,11 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0xA1:
-        ldr(indx(), R.A)
+        cpu.ldr(cpu.indx(), R.A)
         resCycles = 6
 
     case 0xB1:
-        ldr(indy(), R.A)
+        cpu.ldr(cpu.indy(), R.A)
         if cpu.pbCrossed {
         	resCycles = 6
         } else {
@@ -499,23 +505,23 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // LDX
     case 0xA2:
-        ldr(imm(), R.X)
+        cpu.ldr(cpu.imm(), R.X)
         resCycles = 2
 
     case 0xA6:
-        ldr(zp(), R.X)
+        cpu.ldr(cpu.zp(), R.X)
         resCycles = 3
 
     case 0xB6:
-        ldr(zpy(), R.X)
+        cpu.ldr(cpu.zpy(), R.X)
         resCycles = 4
 
     case 0xAE:
-        ldr(abs(), R.X)
+        cpu.ldr(cpu.abs(), R.X)
         resCycles = 4
 
     case 0xBE:
-        ldr(aby(), R.X)
+        cpu.ldr(cpu.aby(), R.X)
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -524,23 +530,23 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // LDY
     case 0xA0:
-        ldr(imm(), R.Y)
+        cpu.ldr(cpu.imm(), R.Y)
         resCycles = 2
 
     case 0xA4:
-        ldr(zp(), R.Y)
+        cpu.ldr(cpu.zp(), R.Y)
         resCycles = 3
 
     case 0xB4:
-        ldr(zpx(), R.Y)
+        cpu.ldr(cpu.zpx(), R.Y)
         resCycles = 4
 
     case 0xAC:
-        ldr(abs(), R.Y)
+        cpu.ldr(cpu.abs(), R.Y)
         resCycles = 4
 
     case 0xBC:
-        ldr(abx(), R.Y)
+        cpu.ldr(cpu.abx(), R.Y)
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -549,45 +555,45 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // LSR
     case 0x4A:
-        lsra()
+        cpu.lsra()
         resCycles = 2
 
     case 0x46:
-        lsrm(zp())
+        cpu.lsrmcpu.(zp())
         resCycles = 5
 
     case 0x56:
-        lsrm(zpx())
+        cpu.lsrmcpu.(zpx())
         resCycles = 6
 
     case 0x4E:
-        lsrm(abs())
+        cpu.lsrmcpu.(abs())
         resCycles = 6
 
     case 0x5E:
-        lsrm(abx())
+        cpu.lsrmcpu.(abx())
         resCycles = 7
 
     // NOP
     case 0xEA:
-        nop()
+        cpu.nop()
         resCycles = 2
 
     // ORA
     case 0x09:
-        ora(imm())
+        cpu.ora(imm())
         resCycles = 2
 
     case 0x05:
-        ora(imm())
+        cpu.ora(cpu.imm())
         resCycles = 2
 
     case 0x15:
-        ora(imm())
+        cpu.ora(cpu.imm())
         resCycles = 3
 
     case 0x1D:
-        ora(imm())
+        cpu.ora(cpu.imm())
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -595,7 +601,7 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0x19:
-        ora(imm())
+        cpu.ora(cpu.imm())
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -603,11 +609,11 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0x01:
-        ora(imm())
+        cpu.ora(cpu.imm())
         resCycles = 6
 
     case 0x11:
-        ora(imm())
+        cpu.ora(cpu.imm())
         if cpu.pbCrossed {
         	resCycles = 6
         } else {
@@ -616,66 +622,66 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // PHA
     case 0x48:
-        pha()
+        cpu.pha()
         resCycles = 3
 
     // PHP
     case 0x08:
-        php()
+        cpu.php()
         resCycles = 3
 
     // PLA
     case 0x68:
-        pla()
+        cpu.pla()
         resCycles = 4
 
     // PLP
     case 0x28:
-        plp()
+        cpu.plp()
         resCycles = 4
 
     // ROL
     case 0x2A:
-        rola()
+        cpu.rolacpu.()
         resCycles = 2
 
     case 0x6E:
-        rorm(abs())
+        cpu.rormcpu.(abs())
         resCycles = 6
 
     case 0x7E:
-        rorm(abx())
+        cpu.rormcpu.(abx())
         resCycles = 7
 
     // RTI
     case 0x40:
-        rti()
+        cpu.rti()
         resCycles = 6
 
     // RTS
     case 0x60:
-        rts()
+        cpu.rts()
         resCycles = 6
 
     // SBC
     case 0xE9:
-        sbc(imm())
+        cpu.sbc(cpu.imm())
         resCycles = 2
 
     case 0xE5:
-        sbc(zp())
+        cpu.sbc(cpu.zp())
         resCycles = 3
 
     case 0xF5:
-        sbc(zpx())
+        cpu.sbc(cpu.zpx())
         resCycles = 4
 
     case 0xED:
-        sbc(abs())
+        cpu.sbc(cpu.abs())
         resCycles = 4
 
     case 0xFD:
-        sbc(abx())
+        cpu.sbc(cpu.abx())
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -683,7 +689,7 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0xF9:
-        sbc(aby())
+        cpu.sbc(cpu.aby())
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -691,11 +697,11 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0xE1:
-        sbc(indx())
+        cpu.sbc(cpu.indx())
         resCycles = 6
 
     case 0xF1:
-        sbc(indy())
+        cpu.sbc(cpu.indy())
         if cpu.pbCrossed {
         	resCycles = 6
         } else {
@@ -704,34 +710,34 @@ func (cpu *Cpu) execute() (resCycles int) {
 
     // SEC
     case 0x38:
-        sec()
+        cpu.sec()
         resCycles = 2
 
     // SED
     case 0xF8:
-        sed()
+        cpu.sed()
         resCycles = 2
 
     // SEI
     case 0x78:
-        sei()
+        cpu.sei()
         resCycles = 2
 
     // STA
     case 0x85:
-        st(zp(), R.A)
+        cpu.st(cpu.zp(), R.A)
         resCycles = 3
 
     case 0x95:
-        st(zpx(), R.A)
+        cpu.st(cpu.zpx(), R.A)
         resCycles = 4
 
     case 0x8D:
-        st(abs(), R.A)
+        cpu.st(cpu.abs(), R.A)
         resCycles = 4
 
     case 0x9D:
-        st(abx(), R.A)
+        cpu.st(cpu.abx(), R.A)
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -739,7 +745,7 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0x99:
-        st(aby(), R.A)
+        cpu.st(cpu.aby(), R.A)
         if cpu.pbCrossed {
         	resCycles = 5
         } else {
@@ -747,11 +753,11 @@ func (cpu *Cpu) execute() (resCycles int) {
         }
 
     case 0x81:
-        st(indx(), R.A)
+        cpu.st(cpu.indx(), R.A)
         resCycles = 6
 
     case 0x91:
-        st(indy(), R.A)
+        cpu.st(indy(), R.A)
         if cpu.pbCrossed {
         	resCycles = 6
         } else {
@@ -760,58 +766,58 @@ func (cpu *Cpu) execute() (resCycles int) {
         
     // STX
     case 0x86:
-        st(zp(), R.X)
+        cpu.st(cpu.zp(), R.X)
         resCycles = 3
 
     case 0x96:
-        st(zpy(), R.X)
+        cpu.st(cpu.zpy(), R.X)
         resCycles = 4
 
     case 0x8E:
-        st(abs(), R.X)
+        cpu.st(cpu.abs(), R.X)
         resCycles = 4
 
     // STY
     case 0x84:
-        st(zp(), R.Y)
+        cpu.st(cpu.zp(), R.Y)
         resCycles = 3
 
     case 0x94:
-        st(zpx(), R.Y)
+        cpu.st(cpu.zpx(), R.Y)
         resCycles = 4
 
     case 0x8C:
-        st(abs(), R.Y)
+        cpu.st(cpu.abs(), R.Y)
         resCycles = 4
 
     // TAX
     case 0xAA:
-        taxy(R.X)
+        cpu.taxy(R.X)
         resCycles = 2
 
     // TAY
     case 0xA8:
-        taxy(R.Y)
+        cpu.taxy(R.Y)
         resCycles = 2
 
     // TSX
     case 0xBA:
-        tsx()
+        cpu.tsx()
         resCycles = 2
 
     // TXA
     case 0x8A:
-        txya(R.X)
+        cpu.txya(R.X)
         resCycles = 2
 
     // TXS
     case 0x9A:
-        txs()
+        cpu.txs()
         resCycles = 2
 
     // TYA
     case 0x98:
-        txya(R.Y)
+        cpu.txya(R.Y)
         resCycles = 2
     }		
 
@@ -819,11 +825,11 @@ func (cpu *Cpu) execute() (resCycles int) {
 }
 
 // instruction implementations
-func (cpu *Cpu) adc(int addr) {
+func (cpu *Cpu) adc(addr int) {
     data := cpu.mem.read(addr)
 
     // Calculate auxiliary value
-    t := ac + data + cpu.p.c
+    t := cpu.ac + data + cpu.p.c
 
     // Set flags: overflow, sign, zero, and carry
     overflow := ((cpu.ac & M.BIT_7) != (t & M.BIT_7))
@@ -856,7 +862,6 @@ func (cpu *Cpu) adc(int addr) {
 
 func (cpu *Cpu) and(int addr) {
     data := cpu.mem.read(addr)
-
     cpu.ac &= data
 
     // flags: sign, zero.
@@ -880,7 +885,7 @@ func (cpu *Cpu) asla() {
 func (cpu *Cpu) asl(int addr) {
     data := cpu.mem.read(addr)
 
-    carry := ((data & M.BIT_7) == M.BIT_7)
+    carry := (data & M.BIT_7) == M.BIT_7
     if carry {
     	cpu.p.c = 1
     } else {
@@ -888,324 +893,316 @@ func (cpu *Cpu) asl(int addr) {
     }
     data = (data << 1) & 0xFE
 
-    p.setN(data)
-    p.setZ(data)
+    cpu.p.n = data
+    cpu.p.z = data
 
-    mem.write(addr, data)
+    cpu.mem.write(addr, data)
 }
 
 func (cpu *Cpu) bcc(int addr) bool {
-    if (p.c == 0) {
-        pc = addr
+    if cpu.p.c == 0 {
+        cpu.pc = addr
         return true
     }
-
     return false
 }
 
-func (cpu *Cpu) bcs(int addr) bool {
-    if (p.c == 1) {
-        pc = addr
+func (cpu *Cpu) bcs(addr int) bool {
+    if cpu.p.c == 1 {
+        cpu.pc = addr
         return true
     }
-
     return false
 }
 
-func (cpu *Cpu) beq(int addr) bool {
-    if (p.z == 1) {
-        pc = addr
+func (cpu *Cpu) beq(addr int) bool {
+    if cpu.p.z == 1 {
+        cpu.pc = addr
         return true
     }
-
     return false
 }
 
-func (cpu *Cpu) bit(int addr) {
-    int data = mem.read(addr) & ac
+func (cpu *Cpu) bit(addr int) {
+    data := cpu.mem.read(addr) & cpu.ac
 
-    p.setN(data)
-    p.v = ((data & M.BIT_6) != 0) ? 1 : 0
-    p.setZ(data)
+	if data & M.BIT_6 != 0 {
+		cpu.p.v = 1
+	} else {
+		cpu.p.v = 0
+	}
+    cpu.p.n = data
+    cpu.p.z = data
 }
 
-func (cpu *Cpu) bmi(int addr) bool {
-    if (p.n == 1) {
-        pc = addr
+func (cpu *Cpu) bmi(addr int) bool {
+    if cpu.p.n == 1 {
+        cpu.pc = addr
         return true
     }
-
     return false
 }
 
-func (cpu *Cpu) bne(int addr) bool {
-    if (p.z == 0) {
-        pc = addr
+func (cpu *Cpu) bne(addr int) bool {
+    if p.z == 0 {
+        cpu.pc = addr
         return true
     }
-
     return false
 }
 
-func (cpu *Cpu) bpl(int addr) bool {
-    if (p.n == 0) {
-        pc = addr
+func (cpu *Cpu) bpl(addr int) bool {
+    if p.n == 0 {
+        cpu.pc = addr
         return true
     }
-
     return false
 }
 
 func (cpu *Cpu) brk() {
-    int l, h
+    var l, h int
 
     // Even though the brk instruction is just one byte long, the pc is
     // incremented, meaning that the instruction after brk is ignored.
-    pc++
+    cpu.pc++
 
-    mem.write(sp, pc & 0xF0)
-    mem.commit()
-    sp--
-    mem.write(sp, pc & 0xF)
-    mem.commit()
-    sp--
-    mem.write(sp, p.b)
-    sp--
+    cpu.mem.write(cpu.sp, cpu.pc & 0xF0)
+    cpu.mem.commit()
+    cpu.sp--
+    cpu.mem.write(cpu.sp, cpu.pc & 0xF)
+    cpu.mem.commit()
+    cpu.sp--
+    cpu.mem.write(cpu.sp, cpu.p.b)
+    cpu.sp--
 
-    l = mem.read(0xFFFE)
-    h = mem.read(0xFFFF) << 8
+    l = cpu.mem.read(0xFFFE)
+    h = cpu.mem.read(0xFFFF) << 8
 
-    pc = h | l
+    cpu.pc = h | l
 }
 
-func (cpu *Cpu) bvc(int addr) bool {
-    if (p.v == 0) {
-        pc = addr
+func (cpu *Cpu) bvc(addr int) bool {
+    if cpu.p.v == 0 {
+        cpu.pc = addr
         return true
     }
-
     return false
 }
 
-func (cpu *Cpu) bvs(int addr) bool {
-    if (p.v == 1) {
-        pc = addr
+func (cpu *Cpu) bvs(addr int) bool {
+    if p.v == 1 {
+        cpu.pc = addr
         return true
     }
-
     return false
 }
 
 func (cpu *Cpu) clc() {
-    p.c = 0
+    cpu.p.c = 0
 }
 
 func (cpu *Cpu) cld() {
-    p.d = 0
+    cpu.p.d = 0
 }
 
 func (cpu *Cpu) cli() {
-    p.i = 0
+    cpu.p.i = 0
 }
 
 func (cpu *Cpu) clv() {
-    p.v = 0
+    cpu.p.v = 0
 }
 
-func (cpu *Cpu) cmp(int addr, R r) {
-    int data = mem.read(addr)
+// TODO: registers
+func (cpu *Cpu) cmp(addr int, R r) {
+    data := cpu.mem.read(addr)
 
     // Calculate auxiliary value
-    int t = 0
+    t := 0
     switch (r) {
         case A:
             t = ac - data
-            p.c = (ac >= data) ? 1 : 0
-            
+			if cpu.ac >= data {
+				cpu.p.c = 1
+			} else {
+				cpu.p.c = 0
+			}
 
         case X:
-            t = x - data
-            p.c = (x >= data) ? 1 : 0
-            
+            t = cpu.x - data
+			if cpu.x >= data {
+				p.c = 1
+			} else {
+				p.c =0
+			}
 
         case Y:
-            t = y - data
-            p.c = (y >= data) ? 1 : 0
-            
-
-        default:
-            
+            t = cpu.y - data
+			if cpu.y >= data {
+				p.c = 1
+			} else {
+				p.c = 0
+			}
     }
 
     // Set flags
-    p.setN(t)
-    p.setZ(t)
+    cpu.p.n = t
+    cpu.p.z = t
 }
 
-func (cpu *Cpu) dec(int addr) {
-    int data = mem.read(addr)
+func (cpu *Cpu) dec(addr int) {
+    data = cpu.mem.read(addr)
 
     // Decrement & AND 0xFF
-    data = --data & 0xFF
-    mem.write(addr, data)
+    data = (data-1) & 0xFF
+    cpu.mem.write(addr, data)
 
-    p.setN(data)
-    p.setZ(data)
+    cpu.p.n = t
+    cpu.p.z = t
 }
 
 func (cpu *Cpu) decxy(R r) {
     switch (r) {
         case X:
-            x = (x - 1) & 0xFF
-            p.setN(x)
-            p.setZ(x)
-            
+            cpu.x = (cpu.x - 1) & 0xFF
+            cpu.p.n = cpu.x
+            cpu.p.z = cpu.x
 
         case Y:
-            y = (y - 1) & 0xFF
-            p.setN(y)
-            p.setZ(y)
-            
-
-        default:
-            
+            cpu.y = (cpu.y - 1) & 0xFF
+            cpu.p.setN(cpu.y)
+            cpu.p.setZ(cpu.y)
     }
 }
 
-func (cpu *Cpu) eor(int addr) {
-    int data = mem.read(addr)
+func (cpu *Cpu) eor(addr int) {
+    data := cpu.mem.read(addr)
 
-    ac ^= data
-    p.setN(ac)
-    p.setZ(ac)
+    cpu.ac ^= data
+    cpu.p.n = ac
+    cpu.p.z = ac
 }
 
-func (cpu *Cpu) inc(int addr) {
-    int data = mem.read(addr)
+func (cpu *Cpu) inc(addr int) {
+    data := cpu.mem.read(addr)
 
-    data = ++data & 0xFF
-    mem.write(addr, data)
+	data++
+    data &= 0xFF
+    cpu.mem.write(addr, data)
 
-    p.setN(data)
-    p.setZ(data)
+    cpu.p.n = data
+    cpu.p.z = data
 }
 
 func (cpu *Cpu) incxy(R r) {
     switch (r) {
         case X:
-            x = (x + 1) & 0xFF
-            p.setN(x)
-            p.setZ(x)
-            
+            cpu.x = (cpu.x + 1) & 0xFF
+            cpu.p.n = x
+            cpu.p.z = x
 
         case Y:
-            y = (y + 1) & 0xFF
-            p.setN(y)
-            p.setZ(y)
-            
-
-        default:
-            
+            cpu.y = (cpu.y + 1) & 0xFF
+            cpu.p.n = y
+            cpu.p.z = y
     }
 }
 
-func (cpu *Cpu) jmp(int addr) {
-    pc = addr
+func (cpu *Cpu) jmp(addr int) {
+    cpu.pc = addr
 }
 
-func (cpu *Cpu) jsr(int addr) {
-    int t = pc - 1
+func (cpu *Cpu) jsr(addr int) {
+    t := cpu.pc - 1
 
     // Push PC onto the stack
-    mem.write(sp, (t & 0xFF00) >> 8)
-    mem.commit()
-    sp--
-    mem.write(sp, t & 0xFF)
-    sp--
+    cpu.mem.write(cpu.sp, (t & 0xFF00) >> 8)
+    cpu.mem.commit()
+    cpu.sp--
+    cpu.mem.write(cpu.sp, t & 0xFF)
+    cpu.sp--
 
     // Jump
-    pc = addr
+    cpu.pc = addr
 }
 
 func (cpu *Cpu) ldr(int addr, R r) {
-    int data = mem.read(addr)
+    data := cpu.mem.read(addr)
 
     // One func (cpu *Cpu)tion for three different opcodes. Have to switch the register
     switch (r) {
         case A:
-            ac = data
-            p.setN(ac)
-            p.setZ(ac)
+            cpu.ac = data
+            cpu.p.n = ac
+            cpu.p.z = ac
             
-
         case X:
             x = data
-            p.setN(x)
-            p.setZ(x)
-            
+            cpu.p.n = x
+            cpu.p.z = x
 
         case Y:
             y = data
-            p.setN(y)
-            p.setZ(y)
-            
-
-        default:
-            
+            cpu.p.n = y
+            cpu.p.z = y
     }
 }
 
 func (cpu *Cpu) lsra() {
-    p.n = 0
-    p.c = ((ac & M.BIT_0) == 0) ? 0 : 1
-    ac = (ac >> 1) & 0x7F
-    p.setZ(ac)
+    cpu.p.n = 0
+    cpu.p.c = ((cpu.ac & M.BIT_0) == 0) ? 0 : 1
+    cpu.ac = (cpu.ac >> 1) & 0x7F
+    cpu.p.z = cpu.ac
 }
 
 func (cpu *Cpu) lsrm(int addr) {
-    int data = mem.read(addr)
+    data := cpu.mem.read(addr)
 
-    p.n = 0
-    p.c = ((data & M.BIT_0) == 0) ? 0 : 1
+    cpu.p.n = 0
+	if data & M.BIT_0 == 0 {
+		cpu.p.c = 0
+	} else {
+		cpu.p.c = 1
+	}
     data = (data >> 1) & 0x7F
-    p.setZ(data)
+    cpu.p.z = data
 
-    mem.write(addr, data)
+    cpu.mem.write(addr, data)
 }
 
 func (cpu *Cpu) nop() {
 
 }
 
-func (cpu *Cpu) ora(int addr) {
-    int data = mem.read(addr)
+func (cpu *Cpu) ora(addr int) {
+    data = cpu.mem.read(addr)
 
-    ac |= data
-    p.setN(data)
-    p.setZ(data)
+    cpu.ac |= data
+    cpu.p.n = data
+    cpu.p.z = data
 }
 
 func (cpu *Cpu) pha() {
-    mem.write(sp, ac)
-    sp--
+    cpu.mem.write(cpu.sp, cpu.ac)
+    cpu.sp--
 }
 
 func (cpu *Cpu) php() {
-    mem.write(sp, p.getProcessorStatus())
-    sp--
+    cpu.mem.write(cpu.sp, cpu.p.getProcessorStatus())
+    cpu.sp--
 }
 
 func (cpu *Cpu) pla() {
-    sp++
-    ac = mem.read(sp)
+    cpu.sp++
+    cpu.ac = cpu.mem.read(cpu.sp)
 
-    p.setN(ac)
-    p.setZ(ac)
+    cpu.p.n = ac
+    cpu.p.z = ac
 }
 
 func (cpu *Cpu) plp() {
-    sp++
-    p.setProcessorStatus(mem.read(sp))
+    cpu.sp++
+    cpu.p = cpu.mem.read(sp)
 }
 
 func (cpu *Cpu) rola() {
@@ -1213,35 +1210,45 @@ func (cpu *Cpu) rola() {
     // according to the MSB of the rolled byte
 
     // Take from the byte what will be the future carry
-    int t = ((ac & M.BIT_7) != 0) ? 1 : 0
+	var t
+	if cpu.ac & M.BIT_7 != 0 {
+		t = 1
+	} else {
+		t = 0
+	}
 
     // Rotate left and &
-    ac = (ac << 1) & 0xFE
+    cpu.ac = (cpu.ac << 1) & 0xFE
     // Set LSB with the carry value from before the operation
-    ac |= p.c
+    cpu.ac |= cpu.p.c
     // Set the next carry
-    p.c = t
+    cpu.p.c = t
     // Set flags
-    p.setZ(ac)
-    p.setN(ac)
+    cpu.p.z = cpu.ac
+    cpu.p.n = cpu.ac
 }
 
-func (cpu *Cpu) rolm(int addr) {
-    int data = mem.read(addr)
-    int t = ((data & M.BIT_7) != 0) ? 1 : 0
+func (cpu *Cpu) rolm(addr int) {
+    data := cpu.mem.read(addr)
+    var t
+	if data & M.BIT_7 != 0 {
+		t = 1
+	} else {
+		t = 0
+	}
 
     // Rotate left and &
     data = (data << 1) & 0xFE
     // Set LSB with the carry value from before the operation
-    data |= p.c
+    data |= cpu.p.c
     // Set the next carry
-    p.c = t
+    cpu.p.c = t
     // Set flags
-    p.setZ(data)
-    p.setN(data)
+    cpu.p.z = data
+    cpu.p.n = data
 
     // Write to memory
-    mem.write(addr, data)
+    cpu.mem.write(addr, data)
 }
 
 func (cpu *Cpu) rora() {
@@ -1249,162 +1256,194 @@ func (cpu *Cpu) rora() {
     // according to the LSB of the rolled byte
 
     // Take from the byte what will be the future carry
-    int t = ((ac & M.BIT_0) != 0) ? 1 : 0
+	var t
+	if ac & M.BIT_0 != 0 {
+		t = 1
+	} else {
+		t = 0
+	}
 
     // Rotate right and &
-    ac = (ac >> 1) & 0x7F
+    cpu.ac = (cpu.ac >> 1) & 0x7F
+
     // Set MSB with the carry value from before the operation
-    ac |= (((p.c == 1) ? 0x80 : 0x00))
+	if cpu.p.c == 1 {
+		cpu.ac |= 0x80
+	} else {
+		cpu.ac |= 0x00
+	}
+
     // Set the next carry
-    p.c = t
+    cpu.p.c = t
     // Set flags
-    p.setZ(ac)
-    p.setN(ac)
+    cpu.p.z = cpu.ac
+    cpu.p.n = cpu.ac
 }
 
-func (cpu *Cpu) rorm(int addr) {
-    int data = mem.read(addr)
-    int t = ((data & M.BIT_0) != 0) ? 1 : 0
+func (cpu *Cpu) rorm(addr int) {
+    data := cpu.mem.read(addr)
+    var t
+	if data & M.BIT_0 != 0 {
+		t = 1
+	} else {
+		t = 0
+	}
 
     // Rotate right and &
     data = (data >> 1) & 0x7F
+
     // Set LSB with the carry value from before the operation
-    data |= (((p.c == 1) ? 0x80 : 0x00))
+	if cpu.p.c == 1 {
+		data |= 0x80
+	} else {
+		data |= 0x00
+	}
+
     // Set the next carry
-    p.c = t
+    cpu.p.c = t
     // Set flags
-    p.setZ(data)
-    p.setN(data)
+    cpu.p.z = data
+    cpu.p.n = data
 
     // Write to memory
-    mem.write(addr, data)
+    cpu.mem.write(addr, data)
 }
 
 func (cpu *Cpu) rti() {
-    int l, h
+    var l, h
 
-    sp--
-    p.setProcessorStatus(mem.read(sp))
-    sp--
-    l = mem.read(sp)
-    sp--
-    h = mem.read(sp)
+    cpu.sp--
+    cpu.p = mem.read(cpu.sp)
+    cpu.sp--
+    l = cpu.mem.read(cpu.sp)
+    cpu.sp--
+    h = cpu.mem.read(cpu.sp)
 
-    pc = (h << 8) | l
+    cpu.pc = (h << 8) | l
 }
 
 func (cpu *Cpu) rts() {
-    int l, h
+    var l, h
 
-    sp++
-    l = mem.read(sp)
-    sp++
-    h = mem.read(sp)
+    cpu.sp++
+    l = cpu.mem.read(cpu.sp)
+    cpu.sp++
+    h = cpu.mem.read(cpu.sp)
 
-    pc = ((h << 8) | l) + 1
+    cpu.pc = ((h << 8) | l) + 1
 }
 
 func (cpu *Cpu) sbc(int addr) {
-    int data = mem.read(addr)
-    int t
+    data := cpu.mem.read(addr)
+    var t
 
     // If decimal mode is on...
-    if (p.d == 1) {
+    if (cpu.p.d == 1) {
         // When using SBC, the code should have used SEC to set the carry
         // before. This is to make sure that, if we need to borrow, there is
         // something to borrow.
-        t = bcd(ac) - bcd(data) - (((p.c & M.BIT_0) != 0) ? 0 : 1)
-        p.v = (t > 99 || t < 0) ? 1 : 0
+		var negcarry
+		if cpu.p.c & M.BIT_0 != 0 {
+			negcarry = 0
+		else {
+			negcarry = 1
+		}
+        t = bcd(cpu.ac) - bcd(data) - negcarry
+
+		if t > 99 || t < 0 {
+			cpu.p.v = 1
+		} else {
+			cpu.p.v = 0
+		}
     } else {
-        t = ac - data - (((p.c & M.BIT_0) != 0) ? 0 : 1)
-        p.v = (t > 127 || t < -128) ? 1 : 0
+        t = cpu.ac - data - (((p.c & M.BIT_0) != 0) ? 0 : 1)
+		var negcarry
+		if cpu.p.c & M.BIT_0 != 0 {
+			negcarry = 0
+		} else {
+			negcarry = 1
+		}
+		
+		if t > 127 || t < -128 {
+			cpu.p.v = 1
+		} else {
+			cpu.p.v = 0
+		}
     }
 
     // Set the flags
-    p.c = (t >= 0) ? 1 : 0
-    p.setN(t)
-    p.setZ(t)
+	if t >= 0 {
+		cpu.p.c = 1
+	} else {
+		cpu.p.c = 0
+	}
+    cpu.p.n = t
+    cpu.p.z = t
 
     // Write the result (ANDed, just in case it overflowed)
-    ac = t & 0xFF
+    cpu.ac = t & 0xFF
 }
 
 func (cpu *Cpu) sec() {
-    p.c = 1
+    cpu.p.c = 1
 }
 
 func (cpu *Cpu) sed() {
-    p.d = 1
+    cpu.p.d = 1
 }
 
 func (cpu *Cpu) sei() {
-    p.i = 1
+    cpu.p.i = 1
 }
 
-func (cpu *Cpu) st(int addr, R r) {
+func (cpu *Cpu) st(addr int, R r) {
     switch (r) {
         case A:
-            mem.write(addr, ac)
-            
+            cpu.mem.write(addr, cpu.ac)
 
         case X:
-            mem.write(addr, x)
-            
+            cpu.mem.write(addr, cpu.x)
 
         case Y:
-            mem.write(addr, y)
-            
-
-        default:
-            
+            cpu.mem.write(addr, cpu.y)
     }
 }
 
 func (cpu *Cpu) taxy(R r) {
     switch (r) {
         case X:
-            x = ac
-            p.setN(x)
-            p.setZ(x)
+            cpu.x = cpu.ac
+            cpu.p.n = cpu.x
+            cpu.p.z = cpu.x
             
-
         case Y:
-            y = ac
-            p.setN(y)
-            p.setZ(y)
-            
-
-        default:
-            
+            cpu.y = cpu.ac
+            cpu.p.n = cpu.y
+            cpu.p.z = cpu.y
     }
 }
 
 func (cpu *Cpu) tsx() {
-    x = sp
-    p.setN(x)
-    p.setZ(x)
+    cpu.x = cpu.sp
+    cpu.p.n = cpu.x
+    cpu.p.z = cpu.x
 }
 
 func (cpu *Cpu) txya(R r) {
     switch (r) {
         case X:
-            ac = x
+            cpu.ac = cpu.x
             
-
         case Y:
-            ac = y
-            
-
-        default:
-            
+            cpu.ac = cpu.y
     }
 
-    p.setN(ac)
-    p.setZ(ac)
+    cpu.p.n = cpu.ac
+    cpu.p.z = cpu.ac
 }
 
 func (cpu *Cpu) txs() {
-    sp = x
+    cpu.sp = cpu.x
 }
 
 // helper functions
