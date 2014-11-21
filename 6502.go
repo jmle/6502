@@ -532,9 +532,10 @@ func (cpu *Cpu) execute() (resCycles int) {
 
 	case 0xB1:
 		cpu.ldr(cpu.indy(), A)
-		resCycles = 5
 		if cpu.pbCrossed {
 			resCycles = 6
+		} else {
+			resCycles = 5
 		}
 
 	// LDX
@@ -950,10 +951,11 @@ func (cpu *Cpu) asl(addr int) {
 	} else {
 		cpu.p.c = 0
 	}
-	cpu.p.n = (data << 1) & 0xFE
-	cpu.p.z = cpu.p.n
+	data = (data << 1) & 0xFE
+	cpu.p.n = data
+	cpu.p.z = data
 
-	cpu.mem.write(addr, cpu.p.n)
+	cpu.mem.write(addr, data)
 }
 
 // branch if carry clear
@@ -1704,5 +1706,5 @@ func bcd(n int) int {
 	return (n & 0xF) + ((n & 0xF0) * 10)
 }
 
-// Temporary for successful compilation
+// Temporary to allow successful build.
 func main() {}
