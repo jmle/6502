@@ -895,11 +895,7 @@ func (cpu *Cpu) adc(addr int) {
 	// Calculate auxiliary value
 	aux := cpu.ac + data + cpu.p.c
 	// Set flags: overflow, sign, zero, and carry
-	if cpu.ac&BIT_7 != aux&BIT_7 {
-		cpu.p.v = 1
-	} else {
-		cpu.p.v = 0
-	}
+	cpu.p.v = ((cpu.ac >> 7) & 1) & ((aux >> 7) & 1)
 
 	cpu.p.n = aux
 	cpu.p.z = aux
@@ -932,11 +928,7 @@ func (cpu *Cpu) and(addr int) {
 
 // asymetric shift left accumulator
 func (cpu *Cpu) asla() {
-	if cpu.ac&BIT_7 == BIT_7 {
-		cpu.p.c = 1
-	} else {
-		cpu.p.c = 0
-	}
+	cpu.p.c = (cpu.ac >> 7) & 1
 	cpu.ac <<= 1
 
 	cpu.p.n = cpu.ac
@@ -946,11 +938,8 @@ func (cpu *Cpu) asla() {
 // asymetric shift left memory
 func (cpu *Cpu) asl(addr int) {
 	data := cpu.mem.read(addr)
-	if data&BIT_7 == BIT_7 {
-		cpu.p.c = 1
-	} else {
-		cpu.p.c = 0
-	}
+	cpu.p.c = (data >> 7) & 1
+
 	data = (data << 1) & 0xFE
 	cpu.p.n = data
 	cpu.p.z = data
@@ -988,11 +977,7 @@ func (cpu *Cpu) beq(addr int) bool {
 // sets the bit flag
 func (cpu *Cpu) bit(addr int) {
 	data := cpu.mem.read(addr) & cpu.ac
-	if data&BIT_6 != 0 {
-		cpu.p.v = 1
-	} else {
-		cpu.p.v = 0
-	}
+	cpu.p.v = (data >> 6) & 1
 	cpu.p.n = data
 	cpu.p.z = data
 }
@@ -1229,12 +1214,7 @@ func (cpu *Cpu) ldr(addr, r int) {
 // shift right accumulator
 func (cpu *Cpu) lsra() {
 	cpu.p.n = 0
-	if cpu.ac&BIT_0 == 0 {
-		cpu.p.c = 0
-	} else {
-		cpu.p.c = 1
-	}
-
+	cpu.p.c = cpu.ac & 1
 	cpu.ac = (cpu.ac >> 1) & 0x7F
 	cpu.p.z = cpu.ac
 }
@@ -1244,11 +1224,7 @@ func (cpu *Cpu) lsrm(addr int) {
 	data := cpu.mem.read(addr)
 
 	cpu.p.n = 0
-	if data&BIT_0 == 0 {
-		cpu.p.c = 0
-	} else {
-		cpu.p.c = 1
-	}
+	cpu.p.c = data & 1
 	data = (data >> 1) & 0x7F
 	cpu.p.z = data
 
@@ -1302,13 +1278,7 @@ func (cpu *Cpu) rola() {
 	// according to the MSB of the rolled byte
 
 	// Take from the byte what will be the future carry
-	var t int
-	if cpu.ac&BIT_7 != 0 {
-		t = 1
-	} else {
-		t = 0
-	}
-
+	t := (cpu.ac >> 7) & 1
 	// Rotate left and &
 	cpu.ac = (cpu.ac << 1) & 0xFE
 	// Set LSB with the carry value from before the operation
@@ -1324,12 +1294,7 @@ func (cpu *Cpu) rola() {
 func (cpu *Cpu) rolm(addr int) {
 	data := cpu.mem.read(addr)
 	var t int
-	if data&BIT_7 != 0 {
-		t = 1
-	} else {
-		t = 0
-	}
-
+	t := (data >> 7) & 1
 	// Rotate left and &
 	data = (data << 1) & 0xFE
 	// Set LSB with the carry value from before the operation
@@ -1350,13 +1315,7 @@ func (cpu *Cpu) rora() {
 	// according to the LSB of the rolled byte
 
 	// Take from the byte what will be the future carry
-	var t int
-	if cpu.ac&BIT_0 != 0 {
-		t = 1
-	} else {
-		t = 0
-	}
-
+	t := cpu.ac & 1
 	// Rotate right and &
 	cpu.ac = (cpu.ac >> 1) & 0x7F
 
@@ -1377,13 +1336,7 @@ func (cpu *Cpu) rora() {
 // rotate memory right
 func (cpu *Cpu) rorm(addr int) {
 	data := cpu.mem.read(addr)
-	var t int
-	if data&BIT_0 != 0 {
-		t = 1
-	} else {
-		t = 0
-	}
-
+	t := data & 1
 	// Rotate right and &
 	data = (data >> 1) & 0x7F
 
@@ -1406,40 +1359,30 @@ func (cpu *Cpu) rorm(addr int) {
 
 // return from interrupt
 func (cpu *Cpu) rti() {
-	var l, h int
-
 	cpu.sp--
 	cpu.p.setAsWord(cpu.mem.read(cpu.sp))
 	cpu.sp--
-	l = cpu.mem.read(cpu.sp)
+	l := cpu.mem.read(cpu.sp)
 	cpu.sp--
-	h = cpu.mem.read(cpu.sp)
-
+	h := cpu.mem.read(cpu.sp)
 	cpu.pc = (h << 8) | l
 }
 
 // return from subrutine
 func (cpu *Cpu) rts() {
-	var l, h int
-
 	cpu.sp++
-	l = cpu.mem.read(cpu.sp)
+	l := cpu.mem.read(cpu.sp)
 	cpu.sp++
-	h = cpu.mem.read(cpu.sp)
+	h := cpu.mem.read(cpu.sp)
 
 	cpu.pc = ((h << 8) | l) + 1
 }
 
 // substract with carry
 func (cpu *Cpu) sbc(addr int) {
-	var (
-		t        int
-		negcarry int
-	)
+	var t int
 	data := cpu.mem.read(addr)
-	if cpu.p.c&BIT_0 == 0 {
-		negcarry = 1
-	}
+	negcarry := ^(cpu.p.c & 1)
 	// If decimal mode is on...
 	if cpu.p.d == 1 {
 		// When using SBC, the code should have used SEC to set the carry
