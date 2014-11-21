@@ -18,7 +18,7 @@ type ProcStat struct {
 
 // returns the status as an int word
 func (p ProcStat) getProcessorStatus() (pstatus int) {
-	pstatus = p.c | p.z << 1 | p.i << 2 | p.d << 3 | p.b << 4 | p.v << 6 | p.n << 7
+	pstatus = p.c | p.z<<1 | p.i<<2 | p.d<<3 | p.b<<4 | p.v<<6 | p.n<<7
 	return
 }
 
@@ -913,7 +913,7 @@ func (cpu *Cpu) adc(addr int) {
 	cpu.ac = t & 0xFF
 }
 
-func (cpu *Cpu) and(int addr) {
+func (cpu *Cpu) and(addr int) {
 	data := cpu.mem.read(addr)
 	cpu.ac &= data
 
@@ -935,7 +935,7 @@ func (cpu *Cpu) asla() {
 	cpu.p.z = cpu.ac
 }
 
-func (cpu *Cpu) asl(int addr) {
+func (cpu *Cpu) asl(addr int) {
 	data := cpu.mem.read(addr)
 
 	carry := (data & BIT_7) == BIT_7
@@ -952,7 +952,7 @@ func (cpu *Cpu) asl(int addr) {
 	cpu.mem.write(addr, data)
 }
 
-func (cpu *Cpu) bcc(int addr) bool {
+func (cpu *Cpu) bcc(addr int) bool {
 	if cpu.p.c == 0 {
 		cpu.pc = addr
 		return true
@@ -1213,7 +1213,7 @@ func (cpu *Cpu) lsra() {
 	cpu.p.z = cpu.ac
 }
 
-func (cpu *Cpu) lsrm(int addr) {
+func (cpu *Cpu) lsrm(addr int) {
 	data := cpu.mem.read(addr)
 
 	cpu.p.n = 0
@@ -1269,7 +1269,7 @@ func (cpu *Cpu) rola() {
 
 	// Take from the byte what will be the future carry
 	var t int
-	if cpu.ac & BIT_7 != 0 {
+	if cpu.ac&BIT_7 != 0 {
 		t = 1
 	} else {
 		t = 0
@@ -1391,7 +1391,7 @@ func (cpu *Cpu) rts() {
 	cpu.pc = ((h << 8) | l) + 1
 }
 
-func (cpu *Cpu) sbc(int addr) {
+func (cpu *Cpu) sbc(addr int) {
 	data := cpu.mem.read(addr)
 
 	var t int
