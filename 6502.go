@@ -994,7 +994,7 @@ func (cpu *Cpu) beq(addr int) bool {
 	return false
 }
 
-// TODO
+// sets the bit flag
 func (cpu *Cpu) bit(addr int) {
 	data := cpu.mem.read(addr) & cpu.ac
 
