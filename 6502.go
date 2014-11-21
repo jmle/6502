@@ -889,6 +889,7 @@ func (cpu *Cpu) execute() (resCycles int) {
 }
 
 // instruction implementations
+// add with carry
 func (cpu *Cpu) adc(addr int) {
 	data := cpu.mem.read(addr)
 
@@ -924,6 +925,7 @@ func (cpu *Cpu) adc(addr int) {
 	cpu.ac = t & 0xFF
 }
 
+// and accumulator with memory
 func (cpu *Cpu) and(addr int) {
 	data := cpu.mem.read(addr)
 	cpu.ac &= data
@@ -933,6 +935,7 @@ func (cpu *Cpu) and(addr int) {
 	cpu.p.z = cpu.ac
 }
 
+// asymetric shift left accumulator
 func (cpu *Cpu) asla() {
 	carry := (cpu.ac & BIT_7) == BIT_7
 	if carry {
@@ -946,6 +949,7 @@ func (cpu *Cpu) asla() {
 	cpu.p.z = cpu.ac
 }
 
+// asymetric shift left memory
 func (cpu *Cpu) asl(addr int) {
 	data := cpu.mem.read(addr)
 
@@ -963,6 +967,7 @@ func (cpu *Cpu) asl(addr int) {
 	cpu.mem.write(addr, data)
 }
 
+// branch if carry clear
 func (cpu *Cpu) bcc(addr int) bool {
 	if cpu.p.c == 0 {
 		cpu.pc = addr
@@ -971,6 +976,7 @@ func (cpu *Cpu) bcc(addr int) bool {
 	return false
 }
 
+// branch if carry set
 func (cpu *Cpu) bcs(addr int) bool {
 	if cpu.p.c == 1 {
 		cpu.pc = addr
@@ -979,6 +985,7 @@ func (cpu *Cpu) bcs(addr int) bool {
 	return false
 }
 
+// branch if equals (checks zero)
 func (cpu *Cpu) beq(addr int) bool {
 	if cpu.p.z == 1 {
 		cpu.pc = addr
@@ -987,6 +994,7 @@ func (cpu *Cpu) beq(addr int) bool {
 	return false
 }
 
+// TODO
 func (cpu *Cpu) bit(addr int) {
 	data := cpu.mem.read(addr) & cpu.ac
 
@@ -999,6 +1007,7 @@ func (cpu *Cpu) bit(addr int) {
 	cpu.p.z = data
 }
 
+// branch if negative
 func (cpu *Cpu) bmi(addr int) bool {
 	if cpu.p.n == 1 {
 		cpu.pc = addr
@@ -1007,6 +1016,7 @@ func (cpu *Cpu) bmi(addr int) bool {
 	return false
 }
 
+// branch if not equal (checks zero)
 func (cpu *Cpu) bne(addr int) bool {
 	if cpu.p.z == 0 {
 		cpu.pc = addr
@@ -1015,6 +1025,7 @@ func (cpu *Cpu) bne(addr int) bool {
 	return false
 }
 
+// branch if positive
 func (cpu *Cpu) bpl(addr int) bool {
 	if cpu.p.n == 0 {
 		cpu.pc = addr
@@ -1023,6 +1034,7 @@ func (cpu *Cpu) bpl(addr int) bool {
 	return false
 }
 
+// break
 func (cpu *Cpu) brk() {
 	var l, h int
 
@@ -1045,6 +1057,7 @@ func (cpu *Cpu) brk() {
 	cpu.pc = h | l
 }
 
+// branch if bit clear
 func (cpu *Cpu) bvc(addr int) bool {
 	if cpu.p.v == 0 {
 		cpu.pc = addr
@@ -1053,6 +1066,7 @@ func (cpu *Cpu) bvc(addr int) bool {
 	return false
 }
 
+// branch if bit set
 func (cpu *Cpu) bvs(addr int) bool {
 	if cpu.p.v == 1 {
 		cpu.pc = addr
@@ -1061,23 +1075,28 @@ func (cpu *Cpu) bvs(addr int) bool {
 	return false
 }
 
+// clear carry flag
 func (cpu *Cpu) clc() {
 	cpu.p.c = 0
 }
 
+// clear decimal flag
 func (cpu *Cpu) cld() {
 	cpu.p.d = 0
 }
 
+// clear interrupt flag
 func (cpu *Cpu) cli() {
 	cpu.p.i = 0
 }
 
+// clear bit bit
 func (cpu *Cpu) clv() {
 	cpu.p.v = 0
 }
 
 // TODO: registers
+// compare accumulator with memory
 func (cpu *Cpu) cmp(addr, r int) {
 	data := cpu.mem.read(addr)
 
@@ -1114,6 +1133,7 @@ func (cpu *Cpu) cmp(addr, r int) {
 	cpu.p.z = t
 }
 
+// decrement memory
 func (cpu *Cpu) dec(addr int) {
 	data := cpu.mem.read(addr)
 
@@ -1125,6 +1145,7 @@ func (cpu *Cpu) dec(addr int) {
 	cpu.p.z = data
 }
 
+// decrement register
 func (cpu *Cpu) decxy(r int) {
 	switch r {
 	case X:
@@ -1139,6 +1160,7 @@ func (cpu *Cpu) decxy(r int) {
 	}
 }
 
+// exclusive or accumulator and memory
 func (cpu *Cpu) eor(addr int) {
 	data := cpu.mem.read(addr)
 
@@ -1147,6 +1169,7 @@ func (cpu *Cpu) eor(addr int) {
 	cpu.p.z = cpu.ac
 }
 
+// increment memory
 func (cpu *Cpu) inc(addr int) {
 	data := cpu.mem.read(addr)
 
@@ -1158,6 +1181,7 @@ func (cpu *Cpu) inc(addr int) {
 	cpu.p.z = data
 }
 
+// increment register
 func (cpu *Cpu) incxy(r int) {
 	switch r {
 	case X:
@@ -1172,10 +1196,12 @@ func (cpu *Cpu) incxy(r int) {
 	}
 }
 
+// jump to address
 func (cpu *Cpu) jmp(addr int) {
 	cpu.pc = addr
 }
 
+// jump to subrutine
 func (cpu *Cpu) jsr(addr int) {
 	t := cpu.pc - 1
 
@@ -1191,6 +1217,7 @@ func (cpu *Cpu) jsr(addr int) {
 	cpu.pc = addr
 }
 
+// load memory to register
 func (cpu *Cpu) ldr(addr, r int) {
 	data := cpu.mem.read(addr)
 
@@ -1213,6 +1240,7 @@ func (cpu *Cpu) ldr(addr, r int) {
 	}
 }
 
+// shift right accumulator
 func (cpu *Cpu) lsra() {
 	cpu.p.n = 0
 	if cpu.ac&BIT_0 == 0 {
@@ -1225,6 +1253,7 @@ func (cpu *Cpu) lsra() {
 	cpu.p.z = cpu.ac
 }
 
+// right shift memory
 func (cpu *Cpu) lsrm(addr int) {
 	data := cpu.mem.read(addr)
 
@@ -1240,10 +1269,12 @@ func (cpu *Cpu) lsrm(addr int) {
 	cpu.mem.write(addr, data)
 }
 
+// no operation
 func (cpu *Cpu) nop() {
 
 }
 
+// or with accumulator
 func (cpu *Cpu) ora(addr int) {
 	data := cpu.mem.read(addr)
 
@@ -1252,16 +1283,19 @@ func (cpu *Cpu) ora(addr int) {
 	cpu.p.z = data
 }
 
+// push accumulator to stack
 func (cpu *Cpu) pha() {
 	cpu.mem.write(cpu.sp, cpu.ac)
 	cpu.sp--
 }
 
+// push processor status to stack
 func (cpu *Cpu) php() {
 	cpu.mem.write(cpu.sp, cpu.p.getAsWord())
 	cpu.sp--
 }
 
+// put stack in accumulator
 func (cpu *Cpu) pla() {
 	cpu.sp++
 	cpu.ac = cpu.mem.read(cpu.sp)
@@ -1270,11 +1304,13 @@ func (cpu *Cpu) pla() {
 	cpu.p.z = cpu.ac
 }
 
+// set push stack to processor status
 func (cpu *Cpu) plp() {
 	cpu.sp++
 	cpu.p.setAsWord(cpu.mem.read(cpu.sp))
 }
 
+// rotate accumulator left
 func (cpu *Cpu) rola() {
 	// This opcode uses the carry to fill the LSB, and then sets the carry
 	// according to the MSB of the rolled byte
@@ -1298,6 +1334,7 @@ func (cpu *Cpu) rola() {
 	cpu.p.n = cpu.ac
 }
 
+// rotate memory left
 func (cpu *Cpu) rolm(addr int) {
 	data := cpu.mem.read(addr)
 	var t int
@@ -1321,6 +1358,7 @@ func (cpu *Cpu) rolm(addr int) {
 	cpu.mem.write(addr, data)
 }
 
+// rorate accumulator right
 func (cpu *Cpu) rora() {
 	// This opcode uses the carry to fill the MSB, and then sets the carry
 	// according to the LSB of the rolled byte
@@ -1350,6 +1388,7 @@ func (cpu *Cpu) rora() {
 	cpu.p.n = cpu.ac
 }
 
+// rotate memory right
 func (cpu *Cpu) rorm(addr int) {
 	data := cpu.mem.read(addr)
 	var t int
@@ -1379,6 +1418,7 @@ func (cpu *Cpu) rorm(addr int) {
 	cpu.mem.write(addr, data)
 }
 
+// return from interrupt
 func (cpu *Cpu) rti() {
 	var l, h int
 
@@ -1392,6 +1432,7 @@ func (cpu *Cpu) rti() {
 	cpu.pc = (h << 8) | l
 }
 
+// return from subrutine
 func (cpu *Cpu) rts() {
 	var l, h int
 
@@ -1403,6 +1444,7 @@ func (cpu *Cpu) rts() {
 	cpu.pc = ((h << 8) | l) + 1
 }
 
+// substract with carry
 func (cpu *Cpu) sbc(addr int) {
 	data := cpu.mem.read(addr)
 
@@ -1454,18 +1496,22 @@ func (cpu *Cpu) sbc(addr int) {
 	cpu.ac = t & 0xFF
 }
 
+// set carry flag
 func (cpu *Cpu) sec() {
 	cpu.p.c = 1
 }
 
+// set decimal flag
 func (cpu *Cpu) sed() {
 	cpu.p.d = 1
 }
 
+// set interrupt
 func (cpu *Cpu) sei() {
 	cpu.p.i = 1
 }
 
+// store register in memory
 func (cpu *Cpu) st(addr, r int) {
 	switch r {
 	case A:
@@ -1479,6 +1525,7 @@ func (cpu *Cpu) st(addr, r int) {
 	}
 }
 
+// copy accumulator in register
 func (cpu *Cpu) taxy(r int) {
 	switch r {
 	case X:
@@ -1493,12 +1540,14 @@ func (cpu *Cpu) taxy(r int) {
 	}
 }
 
+// load stack in register
 func (cpu *Cpu) tsx() {
 	cpu.x = cpu.sp
 	cpu.p.n = cpu.x
 	cpu.p.z = cpu.x
 }
 
+// load accumulator with register
 func (cpu *Cpu) txya(r int) {
 	switch r {
 	case X:
@@ -1512,6 +1561,7 @@ func (cpu *Cpu) txya(r int) {
 	cpu.p.z = cpu.ac
 }
 
+// set stack to register x
 func (cpu *Cpu) txs() {
 	cpu.sp = cpu.x
 }
