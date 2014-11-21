@@ -17,9 +17,19 @@ type ProcStat struct {
 }
 
 // returns the status as an int word
-func (p ProcStat) getProcessorStatus() (pstatus int) {
+func (p ProcStat) getAsWord() (pstatus int) {
 	pstatus = p.c | p.z<<1 | p.i<<2 | p.d<<3 | p.b<<4 | p.v<<6 | p.n<<7
 	return
+}
+
+func (p ProcStat) setAsWord(pstatus int) {
+	if pstatus&BIT_0 == 0 { p.c = 1 } else { p.c = 0 }
+	if pstatus&BIT_1 == 0 { p.z = 1 } else { p.z = 0 }
+	if pstatus&BIT_2 == 0 { p.i = 1 } else { p.i = 0 }
+	if pstatus&BIT_3 == 0 { p.d = 1 } else { p.d = 0 }
+	if pstatus&BIT_4 == 0 { p.b = 1 } else { p.b = 0 }
+	if pstatus&BIT_6 == 0 { p.n = 1 } else { p.n = 0 }
+	if pstatus&BIT_7 == 0 { p.v = 1 } else { p.v = 0 }
 }
 
 // the memory is basically an array with
@@ -55,6 +65,7 @@ const (
 	BIT_5
 	BIT_6
 	BIT_7
+	BIT_8
 )
 
 func (cpu *Cpu) execute() (resCycles int) {
@@ -605,7 +616,7 @@ func (cpu *Cpu) execute() (resCycles int) {
 
 	// ORA
 	case 0x09:
-		cpu.ora(imm())
+		cpu.ora(cpu.imm())
 		resCycles = 2
 
 	case 0x05:
@@ -810,7 +821,7 @@ func (cpu *Cpu) execute() (resCycles int) {
 		resCycles = 6
 
 	case 0x91:
-		cpu.st(indy(), A)
+		cpu.st(cpu.indy(), A)
 		if cpu.pbCrossed {
 			resCycles = 6
 		} else {
@@ -997,7 +1008,7 @@ func (cpu *Cpu) bmi(addr int) bool {
 }
 
 func (cpu *Cpu) bne(addr int) bool {
-	if p.z == 0 {
+	if cpu.p.z == 0 {
 		cpu.pc = addr
 		return true
 	}
@@ -1005,7 +1016,7 @@ func (cpu *Cpu) bne(addr int) bool {
 }
 
 func (cpu *Cpu) bpl(addr int) bool {
-	if p.n == 0 {
+	if cpu.p.n == 0 {
 		cpu.pc = addr
 		return true
 	}
@@ -1018,7 +1029,7 @@ func (cpu *Cpu) brk() {
 	// Even though the brk instruction is just one byte long, the pc is
 	// incremented, meaning that the instruction after brk is ignored.
 	cpu.pc++
-
+/*
 	cpu.mem.write(cpu.sp, cpu.pc&0xF0)
 	cpu.mem.commit()
 	cpu.sp--
@@ -1027,7 +1038,7 @@ func (cpu *Cpu) brk() {
 	cpu.sp--
 	cpu.mem.write(cpu.sp, cpu.p.b)
 	cpu.sp--
-
+*/
 	l = cpu.mem.read(0xFFFE)
 	h = cpu.mem.read(0xFFFF) << 8
 
@@ -1043,7 +1054,7 @@ func (cpu *Cpu) bvc(addr int) bool {
 }
 
 func (cpu *Cpu) bvs(addr int) bool {
-	if p.v == 1 {
+	if cpu.p.v == 1 {
 		cpu.pc = addr
 		return true
 	}
@@ -1074,7 +1085,7 @@ func (cpu *Cpu) cmp(addr, r int) {
 	t := 0
 	switch r {
 	case A:
-		t = ac - data
+		t = cpu.ac - data
 		if cpu.ac >= data {
 			cpu.p.c = 1
 		} else {
@@ -1084,17 +1095,17 @@ func (cpu *Cpu) cmp(addr, r int) {
 	case X:
 		t = cpu.x - data
 		if cpu.x >= data {
-			p.c = 1
+			cpu.p.c = 1
 		} else {
-			p.c = 0
+			cpu.p.c = 0
 		}
 
 	case Y:
 		t = cpu.y - data
 		if cpu.y >= data {
-			p.c = 1
+			cpu.p.c = 1
 		} else {
-			p.c = 0
+			cpu.p.c = 0
 		}
 	}
 
@@ -1104,14 +1115,14 @@ func (cpu *Cpu) cmp(addr, r int) {
 }
 
 func (cpu *Cpu) dec(addr int) {
-	data = cpu.mem.read(addr)
+	data := cpu.mem.read(addr)
 
 	// Decrement & AND 0xFF
 	data = (data - 1) & 0xFF
 	cpu.mem.write(addr, data)
 
-	cpu.p.n = t
-	cpu.p.z = t
+	cpu.p.n = data
+	cpu.p.z = data
 }
 
 func (cpu *Cpu) decxy(r int) {
@@ -1123,8 +1134,8 @@ func (cpu *Cpu) decxy(r int) {
 
 	case Y:
 		cpu.y = (cpu.y - 1) & 0xFF
-		cpu.p.setN(cpu.y)
-		cpu.p.setZ(cpu.y)
+		cpu.p.n = cpu.y
+		cpu.p.z = cpu.y
 	}
 }
 
@@ -1132,8 +1143,8 @@ func (cpu *Cpu) eor(addr int) {
 	data := cpu.mem.read(addr)
 
 	cpu.ac ^= data
-	cpu.p.n = ac
-	cpu.p.z = ac
+	cpu.p.n = cpu.ac
+	cpu.p.z = cpu.ac
 }
 
 func (cpu *Cpu) inc(addr int) {
@@ -1151,13 +1162,13 @@ func (cpu *Cpu) incxy(r int) {
 	switch r {
 	case X:
 		cpu.x = (cpu.x + 1) & 0xFF
-		cpu.p.n = x
-		cpu.p.z = x
+		cpu.p.n = cpu.x
+		cpu.p.z = cpu.x
 
 	case Y:
 		cpu.y = (cpu.y + 1) & 0xFF
-		cpu.p.n = y
-		cpu.p.z = y
+		cpu.p.n = cpu.y
+		cpu.p.z = cpu.y
 	}
 }
 
@@ -1170,7 +1181,8 @@ func (cpu *Cpu) jsr(addr int) {
 
 	// Push PC onto the stack
 	cpu.mem.write(cpu.sp, (t&0xFF00)>>8)
-	cpu.mem.commit()
+	// TODO: what, why?
+	//cpu.mem.commit()
 	cpu.sp--
 	cpu.mem.write(cpu.sp, t&0xFF)
 	cpu.sp--
@@ -1186,18 +1198,18 @@ func (cpu *Cpu) ldr(addr, r int) {
 	switch r {
 	case A:
 		cpu.ac = data
-		cpu.p.n = ac
-		cpu.p.z = ac
+		cpu.p.n = cpu.ac
+		cpu.p.z = cpu.ac
 
 	case X:
-		x = data
-		cpu.p.n = x
-		cpu.p.z = x
+		cpu.x = data
+		cpu.p.n = cpu.x
+		cpu.p.z = cpu.x
 
 	case Y:
-		y = data
-		cpu.p.n = y
-		cpu.p.z = y
+		cpu.y = data
+		cpu.p.n = cpu.y
+		cpu.p.z = cpu.y
 	}
 }
 
@@ -1233,7 +1245,7 @@ func (cpu *Cpu) nop() {
 }
 
 func (cpu *Cpu) ora(addr int) {
-	data = cpu.mem.read(addr)
+	data := cpu.mem.read(addr)
 
 	cpu.ac |= data
 	cpu.p.n = data
@@ -1246,7 +1258,7 @@ func (cpu *Cpu) pha() {
 }
 
 func (cpu *Cpu) php() {
-	cpu.mem.write(cpu.sp, cpu.p.getProcessorStatus())
+	cpu.mem.write(cpu.sp, cpu.p.getAsWord())
 	cpu.sp--
 }
 
@@ -1254,13 +1266,13 @@ func (cpu *Cpu) pla() {
 	cpu.sp++
 	cpu.ac = cpu.mem.read(cpu.sp)
 
-	cpu.p.n = ac
-	cpu.p.z = ac
+	cpu.p.n = cpu.ac
+	cpu.p.z = cpu.ac
 }
 
 func (cpu *Cpu) plp() {
 	cpu.sp++
-	cpu.p = cpu.mem.read(sp)
+	cpu.p.setAsWord(cpu.mem.read(cpu.sp))
 }
 
 func (cpu *Cpu) rola() {
@@ -1315,7 +1327,7 @@ func (cpu *Cpu) rora() {
 
 	// Take from the byte what will be the future carry
 	var t int
-	if ac&BIT_0 != 0 {
+	if cpu.ac&BIT_0 != 0 {
 		t = 1
 	} else {
 		t = 0
@@ -1371,7 +1383,7 @@ func (cpu *Cpu) rti() {
 	var l, h int
 
 	cpu.sp--
-	cpu.p = mem.read(cpu.sp)
+	cpu.p.setAsWord(cpu.mem.read(cpu.sp))
 	cpu.sp--
 	l = cpu.mem.read(cpu.sp)
 	cpu.sp--
@@ -1504,11 +1516,164 @@ func (cpu *Cpu) txs() {
 	cpu.sp = cpu.x
 }
 
-// TODO: implement addressing modes here
+// -----------------------------------
+// Addressing modes
+// - Page crossing is checked
+// - The operand is retrieved and stored for debugging purposes
+// -----------------------------------
+
+/**
+ * Immediate: The operand is used directly to perform the computation.
+ */
+func (cpu *Cpu) imm() int {
+	addr := cpu.pc
+	cpu.pc++
+	return addr
+}
+
+// Zero page: A single byte specifies an address in the first page of mem
+// ($00xx), also known as the zero page, and the byte at that address is
+// used to perform the computation.
+func (cpu *Cpu) zp() int {
+	addr := cpu.mem.read(cpu.pc) & 0xFF
+	cpu.pc++
+	return addr
+}
+
+// Zero page,X: The value in X is added to the specified zero page address
+// for a sum address. The value at the sum address is used to perform the
+// computation.
+func (cpu *Cpu) zpx() int {
+	addr := cpu.mem.read(cpu.pc)
+	cpu.pc++
+	return (addr + cpu.x) & 0xFF
+}
+
+// Zero page,Y: The value in Y is added to the specified zero page address
+// for a sum address. The value at the sum address is used to perform the
+// computation.
+func (cpu *Cpu) zpy() int {
+	addr := cpu.mem.read(cpu.pc)
+	cpu.pc++
+	return (addr + cpu.y) & 0xFF
+}
+
+// The offset specified is added to the current address stored in the
+// Program Counter (PC). Offsets can range from -128 to +127.
+func (cpu *Cpu) rel() int {
+	addr := cpu.mem.read(cpu.pc)
+	cpu.pc++
+	offset := int((byte(addr)))
+	addr = cpu.pc + offset
+
+	cpu.pageBoundaryCrossed(cpu.pc, addr)
+
+	return addr
+}
+
+// Absolute: A full 16-bit address is specified and the byte at that address
+// is used to perform the computation.
+func (cpu *Cpu) abs() int {
+	op1 := cpu.mem.read(cpu.pc)
+	cpu.pc++
+	op2 := cpu.mem.read(cpu.pc)
+	cpu.pc++
+	addr := cpu.mem.read(op1) | (cpu.mem.read(op2) << 8)
+
+	return addr
+}
+
+// Absolute indexed with X: The value in X is added to the specified address
+// for a sum address. The value at the sum address is used to perform the
+// computation.
+func (cpu *Cpu) abx() int {
+	op1 := cpu.mem.read(cpu.pc)
+	cpu.pc++
+	op2 := cpu.mem.read(cpu.pc)
+	cpu.pc++
+	addr := (cpu.mem.read(op1) | (cpu.mem.read(op2) << 8))
+
+	before := addr
+	after := (before + cpu.x)
+
+	cpu.pageBoundaryCrossed(before, after)
+
+	return after & 0xFFFF
+}
+
+// Absolute indexed with Y: The value in Y is added to the specified address
+// for a sum address. The value at the sum address is used to perform the
+// computation.
+func (cpu *Cpu) aby() int {
+	op1 := cpu.pc
+	cpu.pc++
+	op2 := cpu.pc
+	cpu.pc++
+	addr := (cpu.mem.read(op1) | (cpu.mem.read(op2) << 8))
+	before := addr
+	after := (before + cpu.y)
+
+	cpu.pageBoundaryCrossed(before, after)
+
+	return after & 0xFFFF
+}
+
+// Indirect addressing. With this instruction, the 8-bit address (location)
+// supplied by the programmer is considered to be a Zero-Page address, that
+// is, an address in the first 256 (0..255) bytes of memory. The content of
+// this Zero-Page address must contain the low 8-bits of a memory address.
+// The following byte (the contents of address+1) must contain the upper
+// 8-bits of a memory address
+func (cpu *Cpu) ind() int {
+	addr := cpu.mem.read(cpu.pc) & 0xFF
+	cpu.pc++
+
+	return cpu.mem.read(addr) | (cpu.mem.read(addr + 1) << 8)
+}
+
+// Zero Page Indexed Indirect: Much like Indirect Addressing, but the
+// content of the index register is added to the Zero-Page address
+// (location)
+func (cpu *Cpu) indx() int {
+	addr := cpu.mem.read(cpu.pc) & 0xFF
+	cpu.pc++
+
+	return (cpu.mem.read(addr + cpu.x) | (cpu.mem.read(addr + 1 + cpu.x) << 8))
+}
+
+// Indirect Indexed Addressing: Much like Indexed Addressing, but the
+// contents of the index register is added to the Base_Location after it is
+// read from Zero-Page memory.
+func (cpu *Cpu) indy() int {
+	addr := cpu.mem.read(cpu.pc) & 0xFF
+	cpu.pc++
+
+	before := cpu.mem.read(cpu.mem.read(addr) | (cpu.mem.read(addr + 1) << 8))
+	after := before + cpu.y
+
+	cpu.pageBoundaryCrossed(before, after)
+
+	return after
+}
 
 // helper functions
+
+// Checks if a page boundary was crossed between two addresses.
+// 
+// "For example, in the instruction LDA 1234,X, where the value in the X
+// register is added to address 1234 to get the effective address to load
+// the accumulator from, the operand's low byte is fetched before the high
+// byte, so the processor can start adding the X register's value before it
+// has the high byte. If there is no carry operation, the entire indexed
+// operation takes only four clocks, which is one microsecond at 4MHz. If
+// there is a carry requiring the high byte to be incremented, it takes one
+// additional clock." (Taken from the AtariAge forums)
+func (cpu *Cpu) pageBoundaryCrossed(addr1, addr2 int) {
+	cpu.pbCrossed = ((addr1 ^ addr2) & BIT_8) != 0
+}
 
 // returns the bcd equivalent of the given number
 func bcd(n int) int {
 	return (n & 0xF) + ((n & 0xF0) * 10)
 }
+
