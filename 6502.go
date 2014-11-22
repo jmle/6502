@@ -23,13 +23,13 @@ func (p ProcStat) getAsWord() (pstatus int) {
 }
 
 func (p ProcStat) setAsWord(pstatus int) {
-	p.c = ^(pstatus & (1 << 0))
-	p.z = ^(pstatus & (1 << 1))
-	p.i = ^(pstatus & (1 << 2))
-	p.d = ^(pstatus & (1 << 3))
-	p.b = ^(pstatus & (1 << 4))
-	p.n = ^(pstatus & (1 << 6))
-	p.v = ^(pstatus & (1 << 7))
+	p.c = ^(pstatus & 1)
+	p.z = ^((pstatus >> 1) & 1)
+	p.i = ^((pstatus >> 2) & 1)
+	p.d = ^((pstatus >> 3) & 1)
+	p.b = ^((pstatus >> 4) & 1)
+	p.n = ^((pstatus >> 6) & 1)
+	p.v = ^((pstatus >> 7) & 1)
 }
 
 // the memory is basically an array with
