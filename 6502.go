@@ -23,13 +23,13 @@ func (p ProcStat) getAsWord() (pstatus int) {
 }
 
 func (p ProcStat) setAsWord(pstatus int) {
-	if pstatus&BIT_0 == 0 { p.c = 1 } else { p.c = 0 }
-	if pstatus&BIT_1 == 0 { p.z = 1 } else { p.z = 0 }
-	if pstatus&BIT_2 == 0 { p.i = 1 } else { p.i = 0 }
-	if pstatus&BIT_3 == 0 { p.d = 1 } else { p.d = 0 }
-	if pstatus&BIT_4 == 0 { p.b = 1 } else { p.b = 0 }
-	if pstatus&BIT_6 == 0 { p.n = 1 } else { p.n = 0 }
-	if pstatus&BIT_7 == 0 { p.v = 1 } else { p.v = 0 }
+	p.c = ^(pstatus & 1)
+	p.z = ^((pstatus >> 1) & 1)
+	p.i = ^((pstatus >> 2) & 1)
+	p.d = ^((pstatus >> 3) & 1)
+	p.b = ^((pstatus >> 4) & 1)
+	p.n = ^((pstatus >> 6) & 1)
+	p.v = ^((pstatus >> 7) & 1)
 }
 
 // the memory is basically an array with
@@ -186,37 +186,37 @@ func (cpu *Cpu) execute() (resCycles int) {
 
 	// BCC
 	case 0x90:
-		if cpu.bcc(cpu.rel()) {
-			if cpu.pbCrossed {
-				resCycles = 4
-			} else {
-				resCycles = 3
-			}
-		} else {
+		bcc := cpu.bcc(cpu.rel())
+		switch {
+		case bcc && cpu.pbCrossed:
+			resCycles = 4
+		case bcc:
+			resCycles = 4
+		default:
 			resCycles = 2
 		}
 
 	// BCS
 	case 0xB0:
-		if cpu.bcs(cpu.rel()) {
-			if cpu.pbCrossed {
-				resCycles = 4
-			} else {
-				resCycles = 3
-			}
-		} else {
+		bcs := cpu.bcs(cpu.rel())
+		switch {
+		case bcs && cpu.pbCrossed:
+			resCycles = 4
+		case bcs:
+			resCycles = 3
+		default:
 			resCycles = 2
 		}
 
 	// BEQ
 	case 0xF0:
-		if cpu.beq(cpu.rel()) {
-			if cpu.pbCrossed {
-				resCycles = 4
-			} else {
-				resCycles = 3
-			}
-		} else {
+		beq := cpu.beq(cpu.rel())
+		switch {
+		case beq && cpu.pbCrossed:
+			resCycles = 4
+		case beq:
+			resCycles = 3
+		default:
 			resCycles = 2
 		}
 
@@ -231,37 +231,37 @@ func (cpu *Cpu) execute() (resCycles int) {
 
 	// BMI
 	case 0x30:
-		if cpu.bmi(cpu.rel()) {
-			if cpu.pbCrossed {
-				resCycles = 4
-			} else {
-				resCycles = 3
-			}
-		} else {
+		bmi := cpu.bmi(cpu.rel())
+		switch {
+		case bmi && cpu.pbCrossed:
+			resCycles = 4
+		case bmi:
+			resCycles = 3
+		default:
 			resCycles = 2
 		}
 
 	// BNE
 	case 0xD0:
-		if cpu.bne(cpu.rel()) {
-			if cpu.pbCrossed {
-				resCycles = 4
-			} else {
-				resCycles = 3
-			}
-		} else {
+		bne := cpu.bne(cpu.rel())
+		switch {
+		case bne && cpu.pbCrossed:
+			resCycles = 4
+		case bne:
+			resCycles = 3
+		default:
 			resCycles = 2
 		}
 
 	// BPL
 	case 0x10:
-		if cpu.bpl(cpu.rel()) {
-			if cpu.pbCrossed {
-				resCycles = 4
-			} else {
-				resCycles = 3
-			}
-		} else {
+		bpl := cpu.bpl(cpu.rel())
+		switch {
+		case bpl && cpu.pbCrossed:
+			resCycles = 4
+		case bpl:
+			resCycles = 3
+		default:
 			resCycles = 2
 		}
 
@@ -272,25 +272,25 @@ func (cpu *Cpu) execute() (resCycles int) {
 
 	// BVC
 	case 0x50:
-		if cpu.bvc(cpu.rel()) {
-			if cpu.pbCrossed {
-				resCycles = 4
-			} else {
-				resCycles = 3
-			}
-		} else {
+		bvc := cpu.bvc(cpu.rel())
+		switch {
+		case bvc && cpu.pbCrossed:
+			resCycles = 4
+		case bvc:
+			resCycles = 3
+		default:
 			resCycles = 2
 		}
 
 	// BVS
 	case 0x70:
-		if cpu.bvs(cpu.rel()) {
-			if cpu.pbCrossed {
-				resCycles = 4
-			} else {
-				resCycles = 3
-			}
-		} else {
+		bvs := cpu.bvs(cpu.rel())
+		switch {
+		case bvs && cpu.pbCrossed:
+			resCycles = 4
+		case bvs:
+			resCycles = 3
+		default:
 			resCycles = 2
 		}
 
@@ -892,37 +892,28 @@ func (cpu *Cpu) execute() (resCycles int) {
 // add with carry
 func (cpu *Cpu) adc(addr int) {
 	data := cpu.mem.read(addr)
-
 	// Calculate auxiliary value
-	t := cpu.ac + data + cpu.p.c
-
+	aux := cpu.ac + data + cpu.p.c
 	// Set flags: overflow, sign, zero, and carry
-	overflow := ((cpu.ac & BIT_7) != (t & BIT_7))
-	if overflow {
-		cpu.p.v = 1
-	} else {
-		cpu.p.v = 0
-	}
-	cpu.p.n = t
-	cpu.p.z = t
+	cpu.p.v = ((cpu.ac >> 7) & 1) & ((aux >> 7) & 1)
 
-	if cpu.p.d == 1 {
-		t = bcd(cpu.ac) + bcd(data) + cpu.p.c
-		if t > 99 {
+	cpu.p.n = aux
+	cpu.p.z = aux
+	cpu.p.c = 0
+
+	if aux > 255 {
+		cpu.p.c = 1
+	}
+
+	if sum := bcd(cpu.ac) + bcd(data) + cpu.p.c; cpu.p.d == 1 {
+		aux = sum
+		if aux > 99 {
 			cpu.p.c = 1
-		} else {
-			cpu.p.c = 0
-		}
-	} else {
-		if t > 255 {
-			cpu.p.c = 1
-		} else {
-			cpu.p.c = 0
 		}
 	}
 
 	// take the possible carry out
-	cpu.ac = t & 0xFF
+	cpu.ac = aux & 0xFF
 }
 
 // and accumulator with memory
@@ -937,12 +928,7 @@ func (cpu *Cpu) and(addr int) {
 
 // asymetric shift left accumulator
 func (cpu *Cpu) asla() {
-	carry := (cpu.ac & BIT_7) == BIT_7
-	if carry {
-		cpu.p.c = 1
-	} else {
-		cpu.p.c = 0
-	}
+	cpu.p.c = (cpu.ac >> 7) & 1
 	cpu.ac <<= 1
 
 	cpu.p.n = cpu.ac
@@ -952,15 +938,9 @@ func (cpu *Cpu) asla() {
 // asymetric shift left memory
 func (cpu *Cpu) asl(addr int) {
 	data := cpu.mem.read(addr)
+	cpu.p.c = (data >> 7) & 1
 
-	carry := (data & BIT_7) == BIT_7
-	if carry {
-		cpu.p.c = 1
-	} else {
-		cpu.p.c = 0
-	}
 	data = (data << 1) & 0xFE
-
 	cpu.p.n = data
 	cpu.p.z = data
 
@@ -997,12 +977,7 @@ func (cpu *Cpu) beq(addr int) bool {
 // sets the bit flag
 func (cpu *Cpu) bit(addr int) {
 	data := cpu.mem.read(addr) & cpu.ac
-
-	if data&BIT_6 != 0 {
-		cpu.p.v = 1
-	} else {
-		cpu.p.v = 0
-	}
+	cpu.p.v = (data >> 6) & 1
 	cpu.p.n = data
 	cpu.p.z = data
 }
@@ -1036,25 +1011,21 @@ func (cpu *Cpu) bpl(addr int) bool {
 
 // break
 func (cpu *Cpu) brk() {
-	var l, h int
-
 	// Even though the brk instruction is just one byte long, the pc is
 	// incremented, meaning that the instruction after brk is ignored.
 	cpu.pc++
-/*
-	cpu.mem.write(cpu.sp, cpu.pc&0xF0)
-	cpu.mem.commit()
-	cpu.sp--
-	cpu.mem.write(cpu.sp, cpu.pc&0xF)
-	cpu.mem.commit()
-	cpu.sp--
-	cpu.mem.write(cpu.sp, cpu.p.b)
-	cpu.sp--
-*/
-	l = cpu.mem.read(0xFFFE)
-	h = cpu.mem.read(0xFFFF) << 8
+	/*
+		cpu.mem.write(cpu.sp, cpu.pc&0xF0)
+		cpu.mem.commit()
+		cpu.sp--
+		cpu.mem.write(cpu.sp, cpu.pc&0xF)
+		cpu.mem.commit()
+		cpu.sp--
+		cpu.mem.write(cpu.sp, cpu.p.b)
+		cpu.sp--
+	*/
 
-	cpu.pc = h | l
+	cpu.pc = cpu.mem.read(0xFFFF)<<8 | cpu.mem.read(0xFFFE)
 }
 
 // branch if bit clear
@@ -1101,7 +1072,7 @@ func (cpu *Cpu) cmp(addr, r int) {
 	data := cpu.mem.read(addr)
 
 	// Calculate auxiliary value
-	t := 0
+	var t int
 	switch r {
 	case A:
 		t = cpu.ac - data
@@ -1243,12 +1214,7 @@ func (cpu *Cpu) ldr(addr, r int) {
 // shift right accumulator
 func (cpu *Cpu) lsra() {
 	cpu.p.n = 0
-	if cpu.ac&BIT_0 == 0 {
-		cpu.p.c = 0
-	} else {
-		cpu.p.c = 1
-	}
-
+	cpu.p.c = cpu.ac & 1
 	cpu.ac = (cpu.ac >> 1) & 0x7F
 	cpu.p.z = cpu.ac
 }
@@ -1258,11 +1224,7 @@ func (cpu *Cpu) lsrm(addr int) {
 	data := cpu.mem.read(addr)
 
 	cpu.p.n = 0
-	if data&BIT_0 == 0 {
-		cpu.p.c = 0
-	} else {
-		cpu.p.c = 1
-	}
+	cpu.p.c = data & 1
 	data = (data >> 1) & 0x7F
 	cpu.p.z = data
 
@@ -1316,13 +1278,7 @@ func (cpu *Cpu) rola() {
 	// according to the MSB of the rolled byte
 
 	// Take from the byte what will be the future carry
-	var t int
-	if cpu.ac&BIT_7 != 0 {
-		t = 1
-	} else {
-		t = 0
-	}
-
+	t := (cpu.ac >> 7) & 1
 	// Rotate left and &
 	cpu.ac = (cpu.ac << 1) & 0xFE
 	// Set LSB with the carry value from before the operation
@@ -1338,12 +1294,7 @@ func (cpu *Cpu) rola() {
 func (cpu *Cpu) rolm(addr int) {
 	data := cpu.mem.read(addr)
 	var t int
-	if data&BIT_7 != 0 {
-		t = 1
-	} else {
-		t = 0
-	}
-
+	t := (data >> 7) & 1
 	// Rotate left and &
 	data = (data << 1) & 0xFE
 	// Set LSB with the carry value from before the operation
@@ -1364,13 +1315,7 @@ func (cpu *Cpu) rora() {
 	// according to the LSB of the rolled byte
 
 	// Take from the byte what will be the future carry
-	var t int
-	if cpu.ac&BIT_0 != 0 {
-		t = 1
-	} else {
-		t = 0
-	}
-
+	t := cpu.ac & 1
 	// Rotate right and &
 	cpu.ac = (cpu.ac >> 1) & 0x7F
 
@@ -1391,13 +1336,7 @@ func (cpu *Cpu) rora() {
 // rotate memory right
 func (cpu *Cpu) rorm(addr int) {
 	data := cpu.mem.read(addr)
-	var t int
-	if data&BIT_0 != 0 {
-		t = 1
-	} else {
-		t = 0
-	}
-
+	t := data & 1
 	// Rotate right and &
 	data = (data >> 1) & 0x7F
 
@@ -1420,46 +1359,35 @@ func (cpu *Cpu) rorm(addr int) {
 
 // return from interrupt
 func (cpu *Cpu) rti() {
-	var l, h int
-
 	cpu.sp--
 	cpu.p.setAsWord(cpu.mem.read(cpu.sp))
 	cpu.sp--
-	l = cpu.mem.read(cpu.sp)
+	l := cpu.mem.read(cpu.sp)
 	cpu.sp--
-	h = cpu.mem.read(cpu.sp)
-
+	h := cpu.mem.read(cpu.sp)
 	cpu.pc = (h << 8) | l
 }
 
 // return from subrutine
 func (cpu *Cpu) rts() {
-	var l, h int
-
 	cpu.sp++
-	l = cpu.mem.read(cpu.sp)
+	l := cpu.mem.read(cpu.sp)
 	cpu.sp++
-	h = cpu.mem.read(cpu.sp)
+	h := cpu.mem.read(cpu.sp)
 
 	cpu.pc = ((h << 8) | l) + 1
 }
 
 // substract with carry
 func (cpu *Cpu) sbc(addr int) {
-	data := cpu.mem.read(addr)
-
 	var t int
+	data := cpu.mem.read(addr)
+	negcarry := ^(cpu.p.c & 1)
 	// If decimal mode is on...
 	if cpu.p.d == 1 {
 		// When using SBC, the code should have used SEC to set the carry
 		// before. This is to make sure that, if we need to borrow, there is
 		// something to borrow.
-		var negcarry int
-		if cpu.p.c&BIT_0 != 0 {
-			negcarry = 0
-		} else {
-			negcarry = 1
-		}
 		t = bcd(cpu.ac) - bcd(data) - negcarry
 
 		if t > 99 || t < 0 {
@@ -1468,12 +1396,6 @@ func (cpu *Cpu) sbc(addr int) {
 			cpu.p.v = 0
 		}
 	} else {
-		var negcarry int
-		if cpu.p.c&BIT_0 != 0 {
-			negcarry = 0
-		} else {
-			negcarry = 1
-		}
 		t = cpu.ac - data - negcarry
 
 		if t > 127 || t < -128 {
@@ -1678,7 +1600,7 @@ func (cpu *Cpu) ind() int {
 	addr := cpu.mem.read(cpu.pc) & 0xFF
 	cpu.pc++
 
-	return cpu.mem.read(addr) | (cpu.mem.read(addr + 1) << 8)
+	return cpu.mem.read(addr) | (cpu.mem.read(addr+1) << 8)
 }
 
 // Zero Page Indexed Indirect: Much like Indirect Addressing, but the
@@ -1688,7 +1610,7 @@ func (cpu *Cpu) indx() int {
 	addr := cpu.mem.read(cpu.pc) & 0xFF
 	cpu.pc++
 
-	return (cpu.mem.read(addr + cpu.x) | (cpu.mem.read(addr + 1 + cpu.x) << 8))
+	return (cpu.mem.read(addr+cpu.x) | (cpu.mem.read(addr+1+cpu.x) << 8))
 }
 
 // Indirect Indexed Addressing: Much like Indexed Addressing, but the
@@ -1698,7 +1620,7 @@ func (cpu *Cpu) indy() int {
 	addr := cpu.mem.read(cpu.pc) & 0xFF
 	cpu.pc++
 
-	before := cpu.mem.read(cpu.mem.read(addr) | (cpu.mem.read(addr + 1) << 8))
+	before := cpu.mem.read(cpu.mem.read(addr) | (cpu.mem.read(addr+1) << 8))
 	after := before + cpu.y
 
 	cpu.pageBoundaryCrossed(before, after)
@@ -1709,7 +1631,7 @@ func (cpu *Cpu) indy() int {
 // helper functions
 
 // Checks if a page boundary was crossed between two addresses.
-// 
+//
 // "For example, in the instruction LDA 1234,X, where the value in the X
 // register is added to address 1234 to get the effective address to load
 // the accumulator from, the operand's low byte is fetched before the high
@@ -1727,3 +1649,5 @@ func bcd(n int) int {
 	return (n & 0xF) + ((n & 0xF0) * 10)
 }
 
+// Temporary to allow successful build.
+func main() {}
