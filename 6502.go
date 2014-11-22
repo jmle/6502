@@ -34,18 +34,10 @@ func (p ProcStat) setAsWord(pstatus int) {
 
 // the memory is basically an array with
 // fixed size (64K)
-// TODO: reader/writer
-type Mem struct {
-	m [1 << 16]int
-}
-
-func (mem *Mem) read(i int) (value int) {
-	value = mem.m[i]
-	return
-}
-
-func (mem *Mem) write(addr, i int) {
-	mem.m[addr] = i
+type Mem interface {
+	Read(addr int) int
+	Write(addr, value int)
+	Commit()
 }
 
 // Register constants
@@ -70,7 +62,7 @@ const (
 
 func (cpu *Cpu) execute() (resCycles int) {
 	// grab current instruction and increment pc
-	inst := cpu.mem.read(cpu.pc)
+	inst := cpu.mem.Read(cpu.pc)
 	cpu.pc++
 
 	switch inst {
@@ -891,7 +883,7 @@ func (cpu *Cpu) execute() (resCycles int) {
 // instruction implementations
 // add with carry
 func (cpu *Cpu) adc(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 
 	// Calculate auxiliary value
 	t := cpu.ac + data + cpu.p.c
@@ -927,7 +919,7 @@ func (cpu *Cpu) adc(addr int) {
 
 // and accumulator with memory
 func (cpu *Cpu) and(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 	cpu.ac &= data
 
 	// flags: sign, zero.
@@ -951,7 +943,7 @@ func (cpu *Cpu) asla() {
 
 // asymetric shift left memory
 func (cpu *Cpu) asl(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 
 	carry := (data & BIT_7) == BIT_7
 	if carry {
@@ -964,7 +956,7 @@ func (cpu *Cpu) asl(addr int) {
 	cpu.p.n = data
 	cpu.p.z = data
 
-	cpu.mem.write(addr, data)
+	cpu.mem.Write(addr, data)
 }
 
 // branch if carry clear
@@ -996,7 +988,7 @@ func (cpu *Cpu) beq(addr int) bool {
 
 // sets the bit flag
 func (cpu *Cpu) bit(addr int) {
-	data := cpu.mem.read(addr) & cpu.ac
+	data := cpu.mem.Read(addr) & cpu.ac
 
 	if data&BIT_6 != 0 {
 		cpu.p.v = 1
@@ -1042,17 +1034,17 @@ func (cpu *Cpu) brk() {
 	// incremented, meaning that the instruction after brk is ignored.
 	cpu.pc++
 /*
-	cpu.mem.write(cpu.sp, cpu.pc&0xF0)
+	cpu.mem.Write(cpu.sp, cpu.pc&0xF0)
 	cpu.mem.commit()
 	cpu.sp--
-	cpu.mem.write(cpu.sp, cpu.pc&0xF)
+	cpu.mem.Write(cpu.sp, cpu.pc&0xF)
 	cpu.mem.commit()
 	cpu.sp--
-	cpu.mem.write(cpu.sp, cpu.p.b)
+	cpu.mem.Write(cpu.sp, cpu.p.b)
 	cpu.sp--
 */
-	l = cpu.mem.read(0xFFFE)
-	h = cpu.mem.read(0xFFFF) << 8
+	l = cpu.mem.Read(0xFFFE)
+	h = cpu.mem.Read(0xFFFF) << 8
 
 	cpu.pc = h | l
 }
@@ -1098,7 +1090,7 @@ func (cpu *Cpu) clv() {
 // TODO: registers
 // compare accumulator with memory
 func (cpu *Cpu) cmp(addr, r int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 
 	// Calculate auxiliary value
 	t := 0
@@ -1135,11 +1127,11 @@ func (cpu *Cpu) cmp(addr, r int) {
 
 // decrement memory
 func (cpu *Cpu) dec(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 
 	// Decrement & AND 0xFF
 	data = (data - 1) & 0xFF
-	cpu.mem.write(addr, data)
+	cpu.mem.Write(addr, data)
 
 	cpu.p.n = data
 	cpu.p.z = data
@@ -1162,7 +1154,7 @@ func (cpu *Cpu) decxy(r int) {
 
 // exclusive or accumulator and memory
 func (cpu *Cpu) eor(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 
 	cpu.ac ^= data
 	cpu.p.n = cpu.ac
@@ -1171,11 +1163,11 @@ func (cpu *Cpu) eor(addr int) {
 
 // increment memory
 func (cpu *Cpu) inc(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 
 	data++
 	data &= 0xFF
-	cpu.mem.write(addr, data)
+	cpu.mem.Write(addr, data)
 
 	cpu.p.n = data
 	cpu.p.z = data
@@ -1206,11 +1198,11 @@ func (cpu *Cpu) jsr(addr int) {
 	t := cpu.pc - 1
 
 	// Push PC onto the stack
-	cpu.mem.write(cpu.sp, (t&0xFF00)>>8)
+	cpu.mem.Write(cpu.sp, (t&0xFF00)>>8)
 	// TODO: what, why?
 	//cpu.mem.commit()
 	cpu.sp--
-	cpu.mem.write(cpu.sp, t&0xFF)
+	cpu.mem.Write(cpu.sp, t&0xFF)
 	cpu.sp--
 
 	// Jump
@@ -1219,7 +1211,7 @@ func (cpu *Cpu) jsr(addr int) {
 
 // load memory to register
 func (cpu *Cpu) ldr(addr, r int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 
 	// One func (cpu *Cpu)tion for three different opcodes. Have to switch the register
 	switch r {
@@ -1255,7 +1247,7 @@ func (cpu *Cpu) lsra() {
 
 // right shift memory
 func (cpu *Cpu) lsrm(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 
 	cpu.p.n = 0
 	if data&BIT_0 == 0 {
@@ -1266,7 +1258,7 @@ func (cpu *Cpu) lsrm(addr int) {
 	data = (data >> 1) & 0x7F
 	cpu.p.z = data
 
-	cpu.mem.write(addr, data)
+	cpu.mem.Write(addr, data)
 }
 
 // no operation
@@ -1276,7 +1268,7 @@ func (cpu *Cpu) nop() {
 
 // or with accumulator
 func (cpu *Cpu) ora(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 
 	cpu.ac |= data
 	cpu.p.n = data
@@ -1285,20 +1277,20 @@ func (cpu *Cpu) ora(addr int) {
 
 // push accumulator to stack
 func (cpu *Cpu) pha() {
-	cpu.mem.write(cpu.sp, cpu.ac)
+	cpu.mem.Write(cpu.sp, cpu.ac)
 	cpu.sp--
 }
 
 // push processor status to stack
 func (cpu *Cpu) php() {
-	cpu.mem.write(cpu.sp, cpu.p.getAsWord())
+	cpu.mem.Write(cpu.sp, cpu.p.getAsWord())
 	cpu.sp--
 }
 
 // put stack in accumulator
 func (cpu *Cpu) pla() {
 	cpu.sp++
-	cpu.ac = cpu.mem.read(cpu.sp)
+	cpu.ac = cpu.mem.Read(cpu.sp)
 
 	cpu.p.n = cpu.ac
 	cpu.p.z = cpu.ac
@@ -1307,7 +1299,7 @@ func (cpu *Cpu) pla() {
 // set push stack to processor status
 func (cpu *Cpu) plp() {
 	cpu.sp++
-	cpu.p.setAsWord(cpu.mem.read(cpu.sp))
+	cpu.p.setAsWord(cpu.mem.Read(cpu.sp))
 }
 
 // rotate accumulator left
@@ -1336,7 +1328,7 @@ func (cpu *Cpu) rola() {
 
 // rotate memory left
 func (cpu *Cpu) rolm(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 	var t int
 	if data&BIT_7 != 0 {
 		t = 1
@@ -1355,7 +1347,7 @@ func (cpu *Cpu) rolm(addr int) {
 	cpu.p.n = data
 
 	// Write to memory
-	cpu.mem.write(addr, data)
+	cpu.mem.Write(addr, data)
 }
 
 // rorate accumulator right
@@ -1390,7 +1382,7 @@ func (cpu *Cpu) rora() {
 
 // rotate memory right
 func (cpu *Cpu) rorm(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 	var t int
 	if data&BIT_0 != 0 {
 		t = 1
@@ -1415,7 +1407,7 @@ func (cpu *Cpu) rorm(addr int) {
 	cpu.p.n = data
 
 	// Write to memory
-	cpu.mem.write(addr, data)
+	cpu.mem.Write(addr, data)
 }
 
 // return from interrupt
@@ -1423,11 +1415,11 @@ func (cpu *Cpu) rti() {
 	var l, h int
 
 	cpu.sp--
-	cpu.p.setAsWord(cpu.mem.read(cpu.sp))
+	cpu.p.setAsWord(cpu.mem.Read(cpu.sp))
 	cpu.sp--
-	l = cpu.mem.read(cpu.sp)
+	l = cpu.mem.Read(cpu.sp)
 	cpu.sp--
-	h = cpu.mem.read(cpu.sp)
+	h = cpu.mem.Read(cpu.sp)
 
 	cpu.pc = (h << 8) | l
 }
@@ -1437,16 +1429,16 @@ func (cpu *Cpu) rts() {
 	var l, h int
 
 	cpu.sp++
-	l = cpu.mem.read(cpu.sp)
+	l = cpu.mem.Read(cpu.sp)
 	cpu.sp++
-	h = cpu.mem.read(cpu.sp)
+	h = cpu.mem.Read(cpu.sp)
 
 	cpu.pc = ((h << 8) | l) + 1
 }
 
 // substract with carry
 func (cpu *Cpu) sbc(addr int) {
-	data := cpu.mem.read(addr)
+	data := cpu.mem.Read(addr)
 
 	var t int
 	// If decimal mode is on...
@@ -1515,13 +1507,13 @@ func (cpu *Cpu) sei() {
 func (cpu *Cpu) st(addr, r int) {
 	switch r {
 	case A:
-		cpu.mem.write(addr, cpu.ac)
+		cpu.mem.Write(addr, cpu.ac)
 
 	case X:
-		cpu.mem.write(addr, cpu.x)
+		cpu.mem.Write(addr, cpu.x)
 
 	case Y:
-		cpu.mem.write(addr, cpu.y)
+		cpu.mem.Write(addr, cpu.y)
 	}
 }
 
@@ -1585,7 +1577,7 @@ func (cpu *Cpu) imm() int {
 // ($00xx), also known as the zero page, and the byte at that address is
 // used to perform the computation.
 func (cpu *Cpu) zp() int {
-	addr := cpu.mem.read(cpu.pc) & 0xFF
+	addr := cpu.mem.Read(cpu.pc) & 0xFF
 	cpu.pc++
 	return addr
 }
@@ -1594,7 +1586,7 @@ func (cpu *Cpu) zp() int {
 // for a sum address. The value at the sum address is used to perform the
 // computation.
 func (cpu *Cpu) zpx() int {
-	addr := cpu.mem.read(cpu.pc)
+	addr := cpu.mem.Read(cpu.pc)
 	cpu.pc++
 	return (addr + cpu.x) & 0xFF
 }
@@ -1603,7 +1595,7 @@ func (cpu *Cpu) zpx() int {
 // for a sum address. The value at the sum address is used to perform the
 // computation.
 func (cpu *Cpu) zpy() int {
-	addr := cpu.mem.read(cpu.pc)
+	addr := cpu.mem.Read(cpu.pc)
 	cpu.pc++
 	return (addr + cpu.y) & 0xFF
 }
@@ -1611,7 +1603,7 @@ func (cpu *Cpu) zpy() int {
 // The offset specified is added to the current address stored in the
 // Program Counter (PC). Offsets can range from -128 to +127.
 func (cpu *Cpu) rel() int {
-	addr := cpu.mem.read(cpu.pc)
+	addr := cpu.mem.Read(cpu.pc)
 	cpu.pc++
 	offset := int((byte(addr)))
 	addr = cpu.pc + offset
@@ -1624,11 +1616,11 @@ func (cpu *Cpu) rel() int {
 // Absolute: A full 16-bit address is specified and the byte at that address
 // is used to perform the computation.
 func (cpu *Cpu) abs() int {
-	op1 := cpu.mem.read(cpu.pc)
+	op1 := cpu.mem.Read(cpu.pc)
 	cpu.pc++
-	op2 := cpu.mem.read(cpu.pc)
+	op2 := cpu.mem.Read(cpu.pc)
 	cpu.pc++
-	addr := cpu.mem.read(op1) | (cpu.mem.read(op2) << 8)
+	addr := cpu.mem.Read(op1) | (cpu.mem.Read(op2) << 8)
 
 	return addr
 }
@@ -1637,11 +1629,11 @@ func (cpu *Cpu) abs() int {
 // for a sum address. The value at the sum address is used to perform the
 // computation.
 func (cpu *Cpu) abx() int {
-	op1 := cpu.mem.read(cpu.pc)
+	op1 := cpu.mem.Read(cpu.pc)
 	cpu.pc++
-	op2 := cpu.mem.read(cpu.pc)
+	op2 := cpu.mem.Read(cpu.pc)
 	cpu.pc++
-	addr := (cpu.mem.read(op1) | (cpu.mem.read(op2) << 8))
+	addr := (cpu.mem.Read(op1) | (cpu.mem.Read(op2) << 8))
 
 	before := addr
 	after := (before + cpu.x)
@@ -1659,7 +1651,7 @@ func (cpu *Cpu) aby() int {
 	cpu.pc++
 	op2 := cpu.pc
 	cpu.pc++
-	addr := (cpu.mem.read(op1) | (cpu.mem.read(op2) << 8))
+	addr := (cpu.mem.Read(op1) | (cpu.mem.Read(op2) << 8))
 	before := addr
 	after := (before + cpu.y)
 
@@ -1675,30 +1667,30 @@ func (cpu *Cpu) aby() int {
 // The following byte (the contents of address+1) must contain the upper
 // 8-bits of a memory address
 func (cpu *Cpu) ind() int {
-	addr := cpu.mem.read(cpu.pc) & 0xFF
+	addr := cpu.mem.Read(cpu.pc) & 0xFF
 	cpu.pc++
 
-	return cpu.mem.read(addr) | (cpu.mem.read(addr + 1) << 8)
+	return cpu.mem.Read(addr) | (cpu.mem.Read(addr + 1) << 8)
 }
 
 // Zero Page Indexed Indirect: Much like Indirect Addressing, but the
 // content of the index register is added to the Zero-Page address
 // (location)
 func (cpu *Cpu) indx() int {
-	addr := cpu.mem.read(cpu.pc) & 0xFF
+	addr := cpu.mem.Read(cpu.pc) & 0xFF
 	cpu.pc++
 
-	return (cpu.mem.read(addr + cpu.x) | (cpu.mem.read(addr + 1 + cpu.x) << 8))
+	return (cpu.mem.Read(addr + cpu.x) | (cpu.mem.Read(addr + 1 + cpu.x) << 8))
 }
 
 // Indirect Indexed Addressing: Much like Indexed Addressing, but the
 // contents of the index register is added to the Base_Location after it is
 // read from Zero-Page memory.
 func (cpu *Cpu) indy() int {
-	addr := cpu.mem.read(cpu.pc) & 0xFF
+	addr := cpu.mem.Read(cpu.pc) & 0xFF
 	cpu.pc++
 
-	before := cpu.mem.read(cpu.mem.read(addr) | (cpu.mem.read(addr + 1) << 8))
+	before := cpu.mem.Read(cpu.mem.Read(addr) | (cpu.mem.Read(addr + 1) << 8))
 	after := before + cpu.y
 
 	cpu.pageBoundaryCrossed(before, after)
