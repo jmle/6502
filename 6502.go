@@ -23,13 +23,13 @@ func (p ProcStat) getAsWord() (pstatus int) {
 }
 
 func (p ProcStat) setAsWord(pstatus int) {
-	if pstatus&BIT_0 == 0 { p.c = 1 } else { p.c = 0 }
-	if pstatus&BIT_1 == 0 { p.z = 1 } else { p.z = 0 }
-	if pstatus&BIT_2 == 0 { p.i = 1 } else { p.i = 0 }
-	if pstatus&BIT_3 == 0 { p.d = 1 } else { p.d = 0 }
-	if pstatus&BIT_4 == 0 { p.b = 1 } else { p.b = 0 }
-	if pstatus&BIT_6 == 0 { p.n = 1 } else { p.n = 0 }
-	if pstatus&BIT_7 == 0 { p.v = 1 } else { p.v = 0 }
+	if pstatus&BIT_0 == 0 { p.c = 0 } else { p.c = 1 }
+	if pstatus&BIT_1 == 0 { p.z = 0 } else { p.z = 1 }
+	if pstatus&BIT_2 == 0 { p.i = 0 } else { p.i = 1 }
+	if pstatus&BIT_3 == 0 { p.d = 0 } else { p.d = 1 }
+	if pstatus&BIT_4 == 0 { p.b = 0 } else { p.b = 1 }
+	if pstatus&BIT_6 == 0 { p.n = 0 } else { p.n = 1 }
+	if pstatus&BIT_7 == 0 { p.v = 0 } else { p.v = 1 }
 }
 
 // the memory is basically an array with
