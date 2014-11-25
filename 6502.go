@@ -17,12 +17,12 @@ type ProcStat struct {
 }
 
 // returns the status as an int word
-func (p ProcStat) getAsWord() (pstatus int) {
+func (p *ProcStat) getAsWord() (pstatus int) {
 	pstatus = p.c | p.z<<1 | p.i<<2 | p.d<<3 | p.b<<4 | p.v<<6 | p.n<<7
 	return
 }
 
-func (p ProcStat) setAsWord(pstatus int) {
+func (p *ProcStat) setAsWord(pstatus int) {
 	if pstatus&BIT_0 == 0 { p.c = 0 } else { p.c = 1 }
 	if pstatus&BIT_1 == 0 { p.z = 0 } else { p.z = 1 }
 	if pstatus&BIT_2 == 0 { p.i = 0 } else { p.i = 1 }
@@ -32,12 +32,31 @@ func (p ProcStat) setAsWord(pstatus int) {
 	if pstatus&BIT_7 == 0 { p.v = 0 } else { p.v = 1 }
 }
 
-// the memory is basically an array with
-// fixed size (64K)
+// sets the negative flag (n) from the
+// data given
+func (p *ProcStat) setN(data int) {
+	if data&BIT_7 == BIT_7 {
+		p.n = 1
+	} else {
+		p.n = 0
+	}
+}
+
+// set the zero flag (z) from the data
+// given
+func (p *ProcStat) setZ(data int) {
+	if data == 0 {
+		p.z = 1
+	} else {
+		p.z = 0
+	}
+}
+
+// the memory interface
+// a memory must be provided for the cpu to work
 type Mem interface {
 	Read(addr int) int
 	Write(addr, value int)
-	Commit()
 }
 
 // Register constants
@@ -885,36 +904,41 @@ func (cpu *Cpu) execute() (resCycles int) {
 func (cpu *Cpu) adc(addr int) {
 	data := cpu.mem.Read(addr)
 
-	// Calculate auxiliary value
-	t := cpu.ac + data + cpu.p.c
-
-	// Set flags: overflow, sign, zero, and carry
-	overflow := ((cpu.ac & BIT_7) != (t & BIT_7))
-	if overflow {
-		cpu.p.v = 1
-	} else {
-		cpu.p.v = 0
-	}
-	cpu.p.n = t
-	cpu.p.z = t
-
 	if cpu.p.d == 1 {
-		t = bcd(cpu.ac) + bcd(data) + cpu.p.c
-		if t > 99 {
-			cpu.p.c = 1
-		} else {
-			cpu.p.c = 0
-		}
-	} else {
-		if t > 255 {
-			cpu.p.c = 1
-		} else {
-			cpu.p.c = 0
-		}
-	}
+		// Calculate auxiliary value
+		aux := bcd2bin(cpu.ac) + bcd2bin(data) + cpu.p.c
 
-	// take the possible carry out
-	cpu.ac = t & 0xFF
+		if aux > 99 {
+			aux -= 100
+			cpu.p.c = 1
+		} else {
+			cpu.p.c = 0
+		}
+
+		cpu.ac = bin2bcd(aux)
+	} else {
+		// Calculate auxiliary value
+		aux := cpu.ac + data + cpu.p.c
+
+		// Set flags: overflow, sign, zero, and carry
+		overflow := ((cpu.ac & BIT_7) != (aux & BIT_7))
+		if overflow {
+			cpu.p.v = 1
+		} else {
+			cpu.p.v = 0
+		}
+		cpu.p.setN(aux)
+		cpu.p.setZ(aux)
+
+		if aux > 255 {
+			cpu.p.c = 1
+		} else {
+			cpu.p.c = 0
+		}
+
+		// take the possible carry out
+		cpu.ac = aux & 0xFF
+	}
 }
 
 // and accumulator with memory
@@ -1452,7 +1476,7 @@ func (cpu *Cpu) sbc(addr int) {
 		} else {
 			negcarry = 1
 		}
-		t = bcd(cpu.ac) - bcd(data) - negcarry
+		t = bcd2bin(cpu.ac) - bcd2bin(data) - negcarry
 
 		if t > 99 || t < 0 {
 			cpu.p.v = 1
@@ -1714,8 +1738,16 @@ func (cpu *Cpu) pageBoundaryCrossed(addr1, addr2 int) {
 	cpu.pbCrossed = ((addr1 ^ addr2) & BIT_8) != 0
 }
 
-// returns the bcd equivalent of the given number
-func bcd(n int) int {
-	return (n & 0xF) + ((n & 0xF0) * 10)
+// interprets a word as bcd
+func bcd2bin(n int) int {
+	return (n & 0xF) + ((n & 0xF0) >> 4 * 10)
+}
+
+// turns a binary word into bcd
+func bin2bcd(n int) int {
+	units := n % 10
+	tens := (n-units) / 10
+
+	return (tens<<4) | units
 }
 
