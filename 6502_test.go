@@ -1,12 +1,13 @@
 package main
 
 import (
-	"testing"
 	"log"
+	"reflect"
+	"testing"
 )
 
 type Memory struct {
-	memory	[1<<8]int
+	memory [1 << 8]int
 }
 
 func (m *Memory) Read(addr int) int {
@@ -19,7 +20,37 @@ func (m *Memory) Write(addr, value int) {
 
 // interprets a word as bcd
 func bcd(n int) int {
-	return (n & 0xF) + (n&0xF0>>4 * 10)
+	return (n & 0xF) + (n & 0xF0 >> 4 * 10)
+}
+
+func TestAdc(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		ac, val int
+		adcAddr int
+		expProc ProcStat
+	}{
+		{name: "Happy Path",
+			ac: 2, val: 3, adcAddr: 0,
+			expProc: ProcStat{0, 0, 0, 0, 0, 0, 0},
+		},
+		{name: "With Overflow",
+			ac: 20, val: 120, adcAddr: 0,
+			expProc: ProcStat{0, 0, 0, 0, 0, 1, 1},
+		},
+	} {
+		var mem Memory
+		cpu := Cpu{
+			mem: &mem,
+			ac:  tt.ac,
+		}
+		log.Println(tt.name)
+		mem.Write(0, tt.val)
+		cpu.adc(tt.adcAddr)
+		if !reflect.DeepEqual(cpu.p, tt.expProc) {
+			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
+		}
+	}
 }
 
 func TestAdcHappyPath(t *testing.T) {
@@ -33,10 +64,10 @@ func TestAdcHappyPath(t *testing.T) {
 
 	cpu.adc(0)
 
-	if (cpu.ac != 5) {
+	if cpu.ac != 5 {
 		t.Errorf("Invalid ac value: %q != %q", cpu.ac, 5)
 	}
-	if (cpu.p.v != 0 || cpu.p.n != 0 || cpu.p.z != 0 || cpu.p.c != 0) {
+	if cpu.p.v != 0 || cpu.p.n != 0 || cpu.p.z != 0 || cpu.p.c != 0 {
 		t.Errorf("Wrong processor status")
 	}
 }
@@ -52,7 +83,7 @@ func TestAdcWithOverflow(t *testing.T) {
 
 	cpu.adc(0)
 
-	if (cpu.p.v != 1) {
+	if cpu.p.v != 1 {
 		t.Errorf("Overflow flag clear")
 	}
 }
@@ -67,7 +98,7 @@ func TestAdcWithNegative(t *testing.T) {
 
 	cpu.adc(0)
 
-	if (cpu.p.n != 1) {
+	if cpu.p.n != 1 {
 		t.Errorf("Negative flag clear")
 	}
 }
@@ -82,7 +113,7 @@ func TestAdcWithZero(t *testing.T) {
 
 	cpu.adc(0)
 
-	if (cpu.p.z != 1) {
+	if cpu.p.z != 1 {
 		t.Errorf("Zero flag clear")
 	}
 }
@@ -93,16 +124,16 @@ func TestAdcWithDecimalModeWithCarry(t *testing.T) {
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
-	cpu.p.d = 1			// set bcd mode
+	cpu.p.d = 1 // set bcd mode
 	cpu.ac = 1
-	mem.Write(0, 153)   // 99 in bcd is 153
+	mem.Write(0, 153) // 99 in bcd is 153
 
 	cpu.adc(0)
 
-	if (cpu.p.c != 1) {
+	if cpu.p.c != 1 {
 		t.Errorf("Carry flag clear")
 	}
-	if (cpu.ac != 0) {
+	if cpu.ac != 0 {
 		t.Errorf("Invalid result: %b != %d", cpu.ac, 0)
 	}
 }
@@ -113,16 +144,16 @@ func TestAdcWithDecimalWithoutCarry(t *testing.T) {
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
-	cpu.p.d = 1			// set bcd mode
-	cpu.ac = 64			// bcd: 40
-	mem.Write(0, 8)		// bcd: 8
+	cpu.p.d = 1     // set bcd mode
+	cpu.ac = 64     // bcd: 40
+	mem.Write(0, 8) // bcd: 8
 
 	cpu.adc(0)
 
-	if (cpu.p.c != 0) {
+	if cpu.p.c != 0 {
 		t.Errorf("Carry flag set")
 	}
-	if (cpu.ac != 72) {	// bcd: 48
+	if cpu.ac != 72 { // bcd: 48
 		t.Errorf("Invalid result: %b != %d", cpu.ac, 72)
 	}
 }
@@ -137,12 +168,11 @@ func TestAdcWithCarry(t *testing.T) {
 	mem.Write(0, 1)
 
 	cpu.adc(0)
-	log.Println(cpu.ac)
 
-	if (cpu.p.c != 1) {
+	if cpu.p.c != 1 {
 		t.Errorf("Carry flag clear")
 	}
-	if (cpu.ac != 1) {
+	if cpu.ac != 0 {
 		t.Errorf("Invalid result: %b != %d", cpu.ac, 0)
 	}
 }
