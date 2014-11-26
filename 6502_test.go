@@ -137,12 +137,30 @@ func TestAdcWithCarry(t *testing.T) {
 	mem.Write(0, 1)
 
 	cpu.adc(0)
-	log.Println(cpu.ac)
 
 	if (cpu.p.c != 1) {
 		t.Errorf("Carry flag clear")
 	}
-	if (cpu.ac != 1) {
+	if (cpu.ac != 0) {
 		t.Errorf("Invalid result: %b != %d", cpu.ac, 0)
+	}
+}
+
+func TestAnd(t *testing.T) {
+	log.Println("Test and")
+
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.ac = 240
+	mem.Write(0, 255)
+
+	cpu.and(0)
+
+	if cpu.ac != 240 {
+		t.Errorf("Invalid result: %b != %b", cpu.ac, 240)
+	}
+	if cpu.p.n != 1 || cpu.p.z != 0 {
+		t.Errorf("Invalid processor status")
 	}
 }

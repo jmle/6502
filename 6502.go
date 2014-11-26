@@ -947,8 +947,8 @@ func (cpu *Cpu) and(addr int) {
 	cpu.ac &= data
 
 	// flags: sign, zero.
-	cpu.p.n = cpu.ac
-	cpu.p.z = cpu.ac
+	cpu.p.setN(cpu.ac)
+	cpu.p.setZ(cpu.ac)
 }
 
 // asymetric shift left accumulator
