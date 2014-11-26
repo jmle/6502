@@ -79,35 +79,6 @@ func TestAdc(t *testing.T) {
 	}
 }
 
-func TestBcsWithCarryClear(t *testing.T) {
-	cpu := Cpu{}
-	mem := &Memory{}
-	cpu.mem = mem
-	cpu.p.c = 0
-
-	actual := cpu.bcs(16)
-
-	if expect := false; actual != expect {
-		t.Errorf("Invalid return value: %v != %v", actual, expect)
-	}
-}
-
-func TestBcsWithCarrySet(t *testing.T) {
-	cpu := Cpu{}
-	mem := &Memory{}
-	cpu.mem = mem
-	cpu.p.c = 1
-
-	actual := cpu.bcs(16)
-
-	if expect := true; actual != expect {
-		t.Errorf("Invalid return value: %v != %v", actual, expect)
-	}
-	if expect := 16; cpu.pc != expect {
-		t.Errorf("Wrong PC")
-	}
-}
-
 func TestAdcWithCarry(t *testing.T) {
 	cpu := Cpu{}
 	mem := &Memory{}
@@ -234,5 +205,72 @@ func TestBccWithCarrySet(t *testing.T) {
 
 	if expect := false; actual != expect {
 		t.Errorf("Invalid return value: %v != %v", actual, expect)
+	}
+}
+
+func TestBcsWithCarryClear(t *testing.T) {
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.p.c = 0
+
+	actual := cpu.bcs(16)
+
+	if expect := false; actual != expect {
+		t.Errorf("Invalid return value: %v != %v", actual, expect)
+	}
+}
+
+func TestBcsWithCarrySet(t *testing.T) {
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.p.c = 1
+
+	actual := cpu.bcs(16)
+
+	if expect := true; actual != expect {
+		t.Errorf("Invalid return value: %v != %v", actual, expect)
+	}
+	if expect := 16; cpu.pc != expect {
+		t.Errorf("Wrong PC")
+	}
+}
+
+func TestBeq(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		// Set-up
+		addr	int
+		zero	int
+		proc	ProcStat
+		// Expected
+		expPc	int
+		expBranch bool
+	}{
+		{name: "With Zero",
+			addr: 16,
+			zero: 1,
+			expPc: 16,
+			expBranch: true},
+		{name: "Without Zero",
+			zero: 0,
+			expBranch: false},
+	}{
+		var mem Memory
+		cpu := Cpu{
+			mem: &mem,
+			p: ProcStat{z: tt.zero},
+		}
+
+		branch := cpu.beq(tt.addr)
+		t.Log(tt.name)
+
+		if cpu.pc != tt.expPc {
+			t.Errorf("Expected %+v, got %+v\n", tt.expPc, cpu.pc)
+		}
+		if branch != tt.expBranch {
+			t.Errorf("Expected %+v, got %+v\n", tt.expBranch, branch)
+		}
 	}
 }
