@@ -2,7 +2,6 @@ package main
 
 import (
 	"testing"
-	"log"
 )
 
 type Memory struct {
