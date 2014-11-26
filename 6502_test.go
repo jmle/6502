@@ -23,8 +23,6 @@ func bcd(n int) int {
 }
 
 func TestAdcHappyPath(t *testing.T) {
-	log.Println("Test adc happy path")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -42,8 +40,6 @@ func TestAdcHappyPath(t *testing.T) {
 }
 
 func TestAdcWithOverflow(t *testing.T) {
-	log.Println("Test adc with overflow")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -58,8 +54,6 @@ func TestAdcWithOverflow(t *testing.T) {
 }
 
 func TestAdcWithNegative(t *testing.T) {
-	log.Println("Test adc with negative")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -73,8 +67,6 @@ func TestAdcWithNegative(t *testing.T) {
 }
 
 func TestAdcWithZero(t *testing.T) {
-	log.Println("Test adc with zero")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -88,8 +80,6 @@ func TestAdcWithZero(t *testing.T) {
 }
 
 func TestAdcWithDecimalModeWithCarry(t *testing.T) {
-	log.Println("Test adc with decimal")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -108,8 +98,6 @@ func TestAdcWithDecimalModeWithCarry(t *testing.T) {
 }
 
 func TestAdcWithDecimalWithoutCarry(t *testing.T) {
-	log.Println("Test adc with decimal")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -128,8 +116,6 @@ func TestAdcWithDecimalWithoutCarry(t *testing.T) {
 }
 
 func TestAdcWithCarry(t *testing.T) {
-	log.Println("Test adc with decimal")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -147,8 +133,6 @@ func TestAdcWithCarry(t *testing.T) {
 }
 
 func TestAnd(t *testing.T) {
-	log.Println("Test and")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -166,8 +150,6 @@ func TestAnd(t *testing.T) {
 }
 
 func TestAslaWithoutCarry(t *testing.T) {
-	log.Println("Test asla without carry")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -184,8 +166,6 @@ func TestAslaWithoutCarry(t *testing.T) {
 }
 
 func TestAslaWithCarry(t *testing.T) {
-	log.Println("Test asla with carry")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -202,8 +182,6 @@ func TestAslaWithCarry(t *testing.T) {
 }
 
 func TestAslWithoutCarry(t *testing.T) {
-	log.Println("Test asl without carry")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -221,8 +199,6 @@ func TestAslWithoutCarry(t *testing.T) {
 }
 
 func TestAslWithCarry(t *testing.T) {
-	log.Println("Test asl with carry")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -240,8 +216,6 @@ func TestAslWithCarry(t *testing.T) {
 }
 
 func TestBccWithCarryClear(t *testing.T) {
-	log.Println("Test bcc with carry clear")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
@@ -258,8 +232,6 @@ func TestBccWithCarryClear(t *testing.T) {
 }
 
 func TestBccWithCarrySet(t *testing.T) {
-	log.Println("Test bcc with carry set")
-
 	cpu := Cpu{}
 	mem := &Memory{}
 	cpu.mem = mem
