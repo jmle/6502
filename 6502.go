@@ -23,13 +23,41 @@ func (p *ProcStat) getAsWord() (pstatus int) {
 }
 
 func (p *ProcStat) setAsWord(pstatus int) {
-	if pstatus&BIT_0 == 0 { p.c = 0 } else { p.c = 1 }
-	if pstatus&BIT_1 == 0 { p.z = 0 } else { p.z = 1 }
-	if pstatus&BIT_2 == 0 { p.i = 0 } else { p.i = 1 }
-	if pstatus&BIT_3 == 0 { p.d = 0 } else { p.d = 1 }
-	if pstatus&BIT_4 == 0 { p.b = 0 } else { p.b = 1 }
-	if pstatus&BIT_6 == 0 { p.n = 0 } else { p.n = 1 }
-	if pstatus&BIT_7 == 0 { p.v = 0 } else { p.v = 1 }
+	if pstatus&BIT_0 == 0 {
+		p.c = 0
+	} else {
+		p.c = 1
+	}
+	if pstatus&BIT_1 == 0 {
+		p.z = 0
+	} else {
+		p.z = 1
+	}
+	if pstatus&BIT_2 == 0 {
+		p.i = 0
+	} else {
+		p.i = 1
+	}
+	if pstatus&BIT_3 == 0 {
+		p.d = 0
+	} else {
+		p.d = 1
+	}
+	if pstatus&BIT_4 == 0 {
+		p.b = 0
+	} else {
+		p.b = 1
+	}
+	if pstatus&BIT_6 == 0 {
+		p.n = 0
+	} else {
+		p.n = 1
+	}
+	if pstatus&BIT_7 == 0 {
+		p.v = 0
+	} else {
+		p.v = 1
+	}
 }
 
 // sets the negative flag (n) from the
@@ -57,6 +85,11 @@ func (p *ProcStat) setZ(data int) {
 type Mem interface {
 	Read(addr int) int
 	Write(addr, value int)
+}
+
+// interprets a word as bcd
+func bcd(n int) int {
+	return (n & 0xF) + (n & 0xF0 >> 4 * 10)
 }
 
 // Register constants
@@ -1058,16 +1091,16 @@ func (cpu *Cpu) brk() {
 	// Even though the brk instruction is just one byte long, the pc is
 	// incremented, meaning that the instruction after brk is ignored.
 	cpu.pc++
-/*
-	cpu.mem.Write(cpu.sp, cpu.pc&0xF0)
-	cpu.mem.commit()
-	cpu.sp--
-	cpu.mem.Write(cpu.sp, cpu.pc&0xF)
-	cpu.mem.commit()
-	cpu.sp--
-	cpu.mem.Write(cpu.sp, cpu.p.b)
-	cpu.sp--
-*/
+	/*
+		cpu.mem.Write(cpu.sp, cpu.pc&0xF0)
+		cpu.mem.commit()
+		cpu.sp--
+		cpu.mem.Write(cpu.sp, cpu.pc&0xF)
+		cpu.mem.commit()
+		cpu.sp--
+		cpu.mem.Write(cpu.sp, cpu.p.b)
+		cpu.sp--
+	*/
 	l = cpu.mem.Read(0xFFFE)
 	h = cpu.mem.Read(0xFFFF) << 8
 
@@ -1695,7 +1728,7 @@ func (cpu *Cpu) ind() int {
 	addr := cpu.mem.Read(cpu.pc) & 0xFF
 	cpu.pc++
 
-	return cpu.mem.Read(addr) | (cpu.mem.Read(addr + 1) << 8)
+	return cpu.mem.Read(addr) | (cpu.mem.Read(addr+1) << 8)
 }
 
 // Zero Page Indexed Indirect: Much like Indirect Addressing, but the
@@ -1705,7 +1738,7 @@ func (cpu *Cpu) indx() int {
 	addr := cpu.mem.Read(cpu.pc) & 0xFF
 	cpu.pc++
 
-	return (cpu.mem.Read(addr + cpu.x) | (cpu.mem.Read(addr + 1 + cpu.x) << 8))
+	return (cpu.mem.Read(addr+cpu.x) | (cpu.mem.Read(addr+1+cpu.x) << 8))
 }
 
 // Indirect Indexed Addressing: Much like Indexed Addressing, but the
@@ -1715,7 +1748,7 @@ func (cpu *Cpu) indy() int {
 	addr := cpu.mem.Read(cpu.pc) & 0xFF
 	cpu.pc++
 
-	before := cpu.mem.Read(cpu.mem.Read(addr) | (cpu.mem.Read(addr + 1) << 8))
+	before := cpu.mem.Read(cpu.mem.Read(addr) | (cpu.mem.Read(addr+1) << 8))
 	after := before + cpu.y
 
 	cpu.pageBoundaryCrossed(before, after)
@@ -1726,7 +1759,7 @@ func (cpu *Cpu) indy() int {
 // helper functions
 
 // Checks if a page boundary was crossed between two addresses.
-// 
+//
 // "For example, in the instruction LDA 1234,X, where the value in the X
 // register is added to address 1234 to get the effective address to load
 // the accumulator from, the operand's low byte is fetched before the high
@@ -1747,8 +1780,7 @@ func bcd2bin(n int) int {
 // turns a binary word into bcd
 func bin2bcd(n int) int {
 	units := n % 10
-	tens := (n-units) / 10
+	tens := (n - units) / 10
 
-	return (tens<<4) | units
+	return (tens << 4) | units
 }
-
