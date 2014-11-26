@@ -56,9 +56,9 @@ func TestAdc(t *testing.T) {
 			ac:  tt.ac,
 			p:   tt.proc,
 		}
-		log.Println(tt.name)
 		mem.Write(0, tt.val)
 		cpu.adc(tt.adc)
+		log.Println(tt.name)
 		if !reflect.DeepEqual(cpu.p, tt.expProc) {
 			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
 		}
