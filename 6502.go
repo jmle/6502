@@ -87,18 +87,6 @@ type Mem interface {
 	Write(addr, value int)
 }
 
-type Memory struct {
-	memory [1 << 8]int
-}
-
-func (m *Memory) Read(addr int) int {
-	return m.memory[addr]
-}
-
-func (m *Memory) Write(addr, value int) {
-	m.memory[addr] = value
-}
-
 // interprets a word as bcd
 func bcd(n int) int {
 	return (n & 0xF) + (n & 0xF0 >> 4 * 10)

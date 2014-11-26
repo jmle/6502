@@ -1,10 +1,21 @@
 package main
 
 import (
-	"log"
 	"reflect"
 	"testing"
 )
+
+type Memory struct {
+	memory [1 << 8]int
+}
+
+func (m *Memory) Read(addr int) int {
+	return m.memory[addr]
+}
+
+func (m *Memory) Write(addr, value int) {
+	m.memory[addr] = value
+}
 
 func TestAdc(t *testing.T) {
 	for _, tt := range []struct {
@@ -58,7 +69,7 @@ func TestAdc(t *testing.T) {
 		}
 		mem.Write(0, tt.val)
 		cpu.adc(tt.adc)
-		log.Println(tt.name)
+		t.Log(tt.name)
 		if !reflect.DeepEqual(cpu.p, tt.expProc) {
 			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
 		}
