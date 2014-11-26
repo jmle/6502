@@ -242,3 +242,32 @@ func TestBccWithCarrySet(t *testing.T) {
 		t.Errorf("Invalid return value: %v != %v", actual, expect)
 	}
 }
+
+func TestBcsWithCarryClear(t *testing.T) {
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.p.c = 0
+
+	actual := cpu.bcs(16)
+
+	if expect := false; actual != expect {
+		t.Errorf("Invalid return value: %v != %v", actual, expect)
+	}
+}
+
+func TestBcsWithCarrySet(t *testing.T) {
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.p.c = 1
+
+	actual := cpu.bcs(16)
+
+	if expect := true; actual != expect {
+		t.Errorf("Invalid return value: %v != %v", actual, expect)
+	}
+	if expect := 16; cpu.pc != expect {
+		t.Errorf("Wrong PC")
+	}
+}
