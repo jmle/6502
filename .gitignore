@@ -26,3 +26,6 @@ _testmain.go
 *.swo
 *.swp
 
+# Coverage files
+*.out
+
