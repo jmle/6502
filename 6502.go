@@ -960,9 +960,10 @@ func (cpu *Cpu) asla() {
 		cpu.p.c = 0
 	}
 	cpu.ac <<= 1
+	cpu.ac &= 0xFF
 
-	cpu.p.n = cpu.ac
-	cpu.p.z = cpu.ac
+	cpu.p.setN(cpu.ac)
+	cpu.p.setZ(cpu.ac)
 }
 
 // asymetric shift left memory
@@ -977,8 +978,8 @@ func (cpu *Cpu) asl(addr int) {
 	}
 	data = (data << 1) & 0xFE
 
-	cpu.p.n = data
-	cpu.p.z = data
+	cpu.p.setN(data)
+	cpu.p.setZ(data)
 
 	cpu.mem.Write(addr, data)
 }

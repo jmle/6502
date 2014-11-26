@@ -33,8 +33,8 @@ func TestAdcHappyPath(t *testing.T) {
 
 	cpu.adc(0)
 
-	if cpu.ac != 5 {
-		t.Errorf("Invalid ac value: %q != %q", cpu.ac, 5)
+	if expect := 5; cpu.ac != expect {
+		t.Errorf("Invalid ac value: %q != %q", cpu.ac, expect)
 	}
 	if cpu.p.v != 0 || cpu.p.n != 0 || cpu.p.z != 0 || cpu.p.c != 0 {
 		t.Errorf("Wrong processor status")
@@ -102,8 +102,8 @@ func TestAdcWithDecimalModeWithCarry(t *testing.T) {
 	if cpu.p.c != 1 {
 		t.Errorf("Carry flag clear")
 	}
-	if cpu.ac != 0 {
-		t.Errorf("Invalid result: %b != %d", cpu.ac, 0)
+	if expect := 0; cpu.ac != expect {
+		t.Errorf("Invalid result: %b != %d", cpu.ac, expect)
 	}
 }
 
@@ -122,8 +122,8 @@ func TestAdcWithDecimalWithoutCarry(t *testing.T) {
 	if cpu.p.c != 0 {
 		t.Errorf("Carry flag set")
 	}
-	if cpu.ac != 72 {	// bcd: 48
-		t.Errorf("Invalid result: %b != %d", cpu.ac, 72)
+	if expect := 72; cpu.ac != expect {	// bcd: 48
+		t.Errorf("Invalid result: %b != %d", cpu.ac, expect)
 	}
 }
 
@@ -141,8 +141,8 @@ func TestAdcWithCarry(t *testing.T) {
 	if cpu.p.c != 1 {
 		t.Errorf("Carry flag clear")
 	}
-	if cpu.ac != 0 {
-		t.Errorf("Invalid result: %b != %d", cpu.ac, 0)
+	if expect := 0; cpu.ac != expect {
+		t.Errorf("Invalid result: %b != %d", cpu.ac, expect)
 	}
 }
 
@@ -157,10 +157,117 @@ func TestAnd(t *testing.T) {
 
 	cpu.and(0)
 
-	if cpu.ac != 240 {
-		t.Errorf("Invalid result: %b != %b", cpu.ac, 240)
+	if expect := 240; cpu.ac != expect {
+		t.Errorf("Invalid result: %b != %b", cpu.ac, expect)
 	}
 	if cpu.p.n != 1 || cpu.p.z != 0 {
 		t.Errorf("Invalid processor status")
+	}
+}
+
+func TestAslaWithoutCarry(t *testing.T) {
+	log.Println("Test asla without carry")
+
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.ac = 16
+
+	cpu.asla()
+
+	if expect := 32; cpu.ac != expect {
+		t.Errorf("Invalid result: %b != %b", cpu.ac, expect)
+	}
+	if cpu.p.n != 0 || cpu.p.z != 0 || cpu.p.c != 0 {
+		t.Errorf("Invalid processor status")
+	}
+}
+
+func TestAslaWithCarry(t *testing.T) {
+	log.Println("Test asla with carry")
+
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.ac = 128
+
+	cpu.asla()
+
+	if expect := 0; cpu.ac != 0 {
+		t.Errorf("Invalid result: %b != %b", cpu.ac, expect)
+	}
+	if cpu.p.n != 0 || cpu.p.z != 1 || cpu.p.c != 1 {
+		t.Errorf("Invalid processor status")
+	}
+}
+
+func TestAslWithoutCarry(t *testing.T) {
+	log.Println("Test asl without carry")
+
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.mem.Write(0, 16)
+
+	cpu.asl(0)
+
+	actual := cpu.mem.Read(0)
+	if expect := 32; actual != expect {
+		t.Errorf("Invalid result: %b != %b", actual, expect)
+	}
+	if cpu.p.c != 0 || cpu.p.n != 0 || cpu.p.z != 0 {
+		t.Errorf("Invalid processor status")
+	}
+}
+
+func TestAslWithCarry(t *testing.T) {
+	log.Println("Test asl with carry")
+
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.mem.Write(0, 128)
+
+	cpu.asl(0)
+
+	actual := cpu.mem.Read(0)
+	if expect := 0; actual != expect {
+		t.Errorf("Invalid result: %b != %b", actual, expect)
+	}
+	if cpu.p.c != 1 || cpu.p.n != 0 || cpu.p.z != 1 {
+		t.Errorf("Invalid processor status")
+	}
+}
+
+func TestBccWithCarryClear(t *testing.T) {
+	log.Println("Test bcc with carry clear")
+
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.p.c = 0
+
+	actual := cpu.bcc(16)
+
+	if expect := true; actual != expect {
+		t.Errorf("Invalid return value: %v != %v", actual, expect)
+	}
+	if expect := 16; cpu.pc != expect {
+		t.Errorf("Wrong PC")
+	}
+}
+
+func TestBccWithCarrySet(t *testing.T) {
+	log.Println("Test bcc with carry set")
+
+	cpu := Cpu{}
+	mem := &Memory{}
+	cpu.mem = mem
+	cpu.p.c = 1
+
+	actual := cpu.bcc(16)
+
+	if expect := false; actual != expect {
+		t.Errorf("Invalid return value: %v != %v", actual, expect)
 	}
 }
