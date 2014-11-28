@@ -274,3 +274,37 @@ func TestBeq(t *testing.T) {
 		}
 	}
 }
+
+func TestBit(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		// Set-up
+		addr	int
+		value	int
+		ac		int
+		// Expected
+		expProc	ProcStat
+	}{
+		{name: "Sets overflow",
+			value: 64,
+			expProc: ProcStat{z: 0, n: 0, v: 1}},
+		{name: "Overflow not set",
+			value: 4,
+			expProc: ProcStat{z:0, n:0, v:0},
+		},
+	}{
+		var mem Memory
+		cpu := Cpu{
+			mem: &mem,
+			p: ProcStat{},
+		}
+		cpu.mem.Write(tt.addr, tt.value)
+
+		cpu.bit(tt.addr)
+		t.Log(tt.name)
+
+		if reflect.DeepEqual(cpu.p, tt.expProc) {
+			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
+		}
+	}
+}

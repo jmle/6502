@@ -1044,7 +1044,7 @@ func (cpu *Cpu) beq(addr int) bool {
 	return false
 }
 
-// sets the bit flag
+// bit test
 func (cpu *Cpu) bit(addr int) {
 	data := cpu.mem.Read(addr) & cpu.ac
 
@@ -1053,8 +1053,8 @@ func (cpu *Cpu) bit(addr int) {
 	} else {
 		cpu.p.v = 0
 	}
-	cpu.p.n = data
-	cpu.p.z = data
+	cpu.p.setN(data)
+	cpu.p.setZ(data)
 }
 
 // branch if negative
