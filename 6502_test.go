@@ -237,6 +237,7 @@ func TestBcsWithCarrySet(t *testing.T) {
 	}
 }
 
+// TODO: Unify branch instructions tests
 func TestBeq(t *testing.T) {
 	for _, tt := range []struct {
 		name string
@@ -304,6 +305,283 @@ func TestBit(t *testing.T) {
 		t.Log(tt.name)
 
 		if reflect.DeepEqual(cpu.p, tt.expProc) {
+			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
+		}
+	}
+}
+
+func TestBmi(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		// Set-up
+		addr		int
+		negative	int
+		// Expected
+		expPc	int
+		expBranch bool
+	}{
+		{name: "With Negative",
+			addr: 16,
+			negative: 1,
+			expPc: 16,
+			expBranch: true},
+		{name: "Without Negative",
+			negative: 0,
+			expBranch: false},
+	}{
+		var mem Memory
+		cpu := Cpu{
+			mem: &mem,
+			p: ProcStat{n: tt.negative},
+		}
+
+		branch := cpu.bmi(tt.addr)
+		t.Log(tt.name)
+
+		if cpu.pc != tt.expPc {
+			t.Errorf("Expected %+v, got %+v\n", tt.expPc, cpu.pc)
+		}
+		if branch != tt.expBranch {
+			t.Errorf("Expected %+v, got %+v\n", tt.expBranch, branch)
+		}
+	}
+}
+
+func TestBne(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		// Set-up
+		addr		int
+		zero		int
+		// Expected
+		expPc	int
+		expBranch bool
+	}{
+		{name: "With Equals",
+			addr: 16,
+			zero: 0,
+			expPc: 16,
+			expBranch: true},
+		{name: "Without Equals",
+			zero: 1,
+			expBranch: false},
+	}{
+		var mem Memory
+		cpu := Cpu{
+			mem: &mem,
+			p: ProcStat{z: tt.zero},
+		}
+
+		branch := cpu.bne(tt.addr)
+		t.Log(tt.name)
+
+		if cpu.pc != tt.expPc {
+			t.Errorf("Expected %+v, got %+v\n", tt.expPc, cpu.pc)
+		}
+		if branch != tt.expBranch {
+			t.Errorf("Expected %+v, got %+v\n", tt.expBranch, branch)
+		}
+	}
+}
+
+func TestBpl(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		// Set-up
+		addr		int
+		negative	int
+		// Expected
+		expPc	int
+		expBranch bool
+	}{
+		{name: "With Positive",
+			addr: 16,
+			negative: 0,
+			expPc: 16,
+			expBranch: true},
+		{name: "Without Equals",
+			negative: 1,
+			expBranch: false},
+	}{
+		var mem Memory
+		cpu := Cpu{
+			mem: &mem,
+			p: ProcStat{n: tt.negative},
+		}
+
+		branch := cpu.bpl(tt.addr)
+		t.Log(tt.name)
+
+		if cpu.pc != tt.expPc {
+			t.Errorf("Expected %+v, got %+v\n", tt.expPc, cpu.pc)
+		}
+		if branch != tt.expBranch {
+			t.Errorf("Expected %+v, got %+v\n", tt.expBranch, branch)
+		}
+	}
+}
+
+func TestBvc(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		// Set-up
+		addr		int
+		overflow	int
+		// Expected
+		expPc	int
+		expBranch bool
+	}{
+		{name: "Without Overflow",
+			addr: 16,
+			overflow: 0,
+			expPc: 16,
+			expBranch: true},
+		{name: "With Overflow",
+			overflow: 1,
+			expBranch: false},
+	}{
+		var mem Memory
+		cpu := Cpu{
+			mem: &mem,
+			p: ProcStat{v: tt.overflow},
+		}
+
+		branch := cpu.bvc(tt.addr)
+		t.Log(tt.name)
+
+		if cpu.pc != tt.expPc {
+			t.Errorf("Expected %+v, got %+v\n", tt.expPc, cpu.pc)
+		}
+		if branch != tt.expBranch {
+			t.Errorf("Expected %+v, got %+v\n", tt.expBranch, branch)
+		}
+	}
+}
+
+func TestBvs(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		// Set-up
+		addr		int
+		overflow	int
+		// Expected
+		expPc	int
+		expBranch bool
+	}{
+		{name: "With Overflow",
+			addr: 16,
+			overflow: 1,
+			expPc: 16,
+			expBranch: true},
+		{name: "Without Overflow",
+			overflow: 0,
+			expBranch: false},
+	}{
+		var mem Memory
+		cpu := Cpu{
+			mem: &mem,
+			p: ProcStat{v: tt.overflow},
+		}
+
+		branch := cpu.bvs(tt.addr)
+		t.Log(tt.name)
+
+		if cpu.pc != tt.expPc {
+			t.Errorf("Expected %+v, got %+v\n", tt.expPc, cpu.pc)
+		}
+		if branch != tt.expBranch {
+			t.Errorf("Expected %+v, got %+v\n", tt.expBranch, branch)
+		}
+	}
+}
+
+func TestClc(t *testing.T) {
+	cpu := Cpu{}
+	cpu.p.c = 1
+
+	cpu.clc()
+
+	if cpu.p.c != 0 {
+		t.Errorf("Expected %+v, got %+v\n", 0, cpu.p.c)
+	}
+}
+
+func TestCld(t *testing.T) {
+	cpu := Cpu{}
+	cpu.p.d = 1
+
+	cpu.cld()
+
+	if cpu.p.d != 0 {
+		t.Errorf("Expected %+v, got %+v\n", 0, cpu.p.d)
+	}
+}
+
+func TestCli(t *testing.T) {
+	cpu := Cpu{}
+	cpu.p.i = 1
+
+	cpu.cli()
+
+	if cpu.p.i != 0 {
+		t.Errorf("Expected %+v, got %+v\n", 0, cpu.p.i)
+	}
+}
+
+func TestClv(t *testing.T) {
+	cpu := Cpu{}
+	cpu.p.v = 1
+
+	cpu.clv()
+
+	if cpu.p.v != 0 {
+		t.Errorf("Expected %+v, got %+v\n", 0, cpu.p.v)
+	}
+}
+
+func TestCmp(t *testing.T) {
+	for _, tt := range []struct {
+		name		string
+		reg, ac		int
+		data		int
+		// Expected
+		expProc		ProcStat
+	}{
+		{name: "accumulator - set carry",
+			reg: A, ac: 20, data: 10,
+			expProc: ProcStat{c:1, n:0, z:0},
+		},
+		{name: "accumulator - carry clear",
+			reg: A, ac: 5, data: 10,
+			expProc: ProcStat{c:0, n:1, z:0},
+		},
+		{name: "X - set carry",
+			reg: A, ac: 20, data: 10,
+			expProc: ProcStat{c:1, n:0, z:0},
+		},
+		{name: "X - carry clear",
+			reg: A, ac: 5, data: 10,
+			expProc: ProcStat{c:0, n:1, z:0},
+		},
+		{name: "Y - set carry",
+			reg: A, ac: 20, data: 10,
+			expProc: ProcStat{c:1, n:0, z:0},
+		},
+		{name: "Y - carry clear",
+			reg: A, ac: 5, data: 10,
+			expProc: ProcStat{c:0, n:1, z:0},
+		},
+	}{
+		var mem Memory
+		cpu := Cpu{ac: tt.ac}
+		cpu.mem = &mem
+		mem.Write(0, tt.data)
+
+		t.Log(tt.name)
+
+		cpu.cmp(0, tt.reg)
+
+		if !reflect.DeepEqual(cpu.p, tt.expProc) {
 			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
 		}
 	}

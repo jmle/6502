@@ -1085,6 +1085,7 @@ func (cpu *Cpu) bpl(addr int) bool {
 }
 
 // break
+// TODO
 func (cpu *Cpu) brk() {
 	var l, h int
 
@@ -1145,7 +1146,6 @@ func (cpu *Cpu) clv() {
 	cpu.p.v = 0
 }
 
-// TODO: registers
 // compare accumulator with memory
 func (cpu *Cpu) cmp(addr, r int) {
 	data := cpu.mem.Read(addr)
@@ -1179,8 +1179,8 @@ func (cpu *Cpu) cmp(addr, r int) {
 	}
 
 	// Set flags
-	cpu.p.n = t
-	cpu.p.z = t
+	cpu.p.setN(t)
+	cpu.p.setZ(t)
 }
 
 // decrement memory
