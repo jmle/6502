@@ -1272,22 +1272,22 @@ func (cpu *Cpu) jsr(addr int) {
 func (cpu *Cpu) ldr(addr, r int) {
 	data := cpu.mem.Read(addr)
 
-	// One func (cpu *Cpu)tion for three different opcodes. Have to switch the register
+	// One function for three different opcodes. Have to switch the register
 	switch r {
 	case A:
 		cpu.ac = data
-		cpu.p.n = cpu.ac
-		cpu.p.z = cpu.ac
+		cpu.p.setN(cpu.ac)
+		cpu.p.setZ(cpu.ac)
 
 	case X:
 		cpu.x = data
-		cpu.p.n = cpu.x
-		cpu.p.z = cpu.x
+		cpu.p.setN(cpu.x)
+		cpu.p.setZ(cpu.x)
 
 	case Y:
 		cpu.y = data
-		cpu.p.n = cpu.y
-		cpu.p.z = cpu.y
+		cpu.p.setN(cpu.y)
+		cpu.p.setZ(cpu.y)
 	}
 }
 

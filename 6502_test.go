@@ -703,3 +703,49 @@ func TestJmp(t *testing.T) {
 	}
 }
 
+// TODO: test jsr
+
+func TestLdrWithAc(t *testing.T) {
+	for _, tt := range []struct {
+		name				string
+		reg, data, addr		int
+		//exp
+		expProc				ProcStat
+	} {
+		{name: "With ac",
+			reg:A, data:100, addr:40,
+			expProc:ProcStat{},
+		},
+		{name: "With X",
+			reg:X, data:100, addr:40,
+			expProc:ProcStat{},
+		},
+		{name: "With Y",
+			reg:Y, data:100, addr:40,
+			expProc:ProcStat{},
+		},
+	} {
+		var mem Memory
+		cpu := Cpu{mem: &mem}
+		cpu.mem.Write(tt.addr, tt.data)
+
+		cpu.ldr(tt.addr, tt.reg)
+
+		var regValue int
+		switch (tt.reg) {
+		case A:
+			regValue = cpu.ac
+		case X:
+			regValue = cpu.x
+		case Y:
+			regValue = cpu.y
+		}
+
+		if regValue != tt.data {
+			t.Errorf("Expected %+v, got %+v\n", tt.data, regValue)
+		}
+		if exp := (ProcStat{z:0, n:0}); !reflect.DeepEqual(exp, cpu.p) {
+			t.Errorf("Expected %+v, got %+v\n", exp, cpu.p)
+		}
+	}
+}
