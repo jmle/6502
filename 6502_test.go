@@ -691,3 +691,15 @@ func TestIncxyRegY(t *testing.T) {
 		t.Errorf("Expected %+v, got %+v\n", exp, cpu.p)
 	}
 }
+
+func TestJmp(t *testing.T) {
+	cpu := Cpu{}
+
+	exp := 24
+	cpu.jmp(exp)
+
+	if cpu.pc != exp {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.pc)
+	}
+}
+
