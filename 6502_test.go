@@ -586,3 +586,108 @@ func TestCmp(t *testing.T) {
 		}
 	}
 }
+
+func TestDec(t *testing.T) {
+	var mem Memory
+	cpu := Cpu{mem: &mem}
+
+	mem.Write(0, 1)
+	cpu.dec(0)
+
+	if actual := cpu.mem.Read(0); actual != 0 {
+		t.Errorf("Expected %+v, got %+v\n", 0, actual)
+	}
+	if exp := cpu.p.z; exp != 1 {
+		t.Errorf("Expected %+v, got %+v\n", 1, exp)
+	}
+}
+
+func TestDecxyRegX(t *testing.T) {
+	cpu := Cpu{}
+	cpu.x = 1
+
+	cpu.decxy(X)
+
+	if exp := 0; cpu.x != exp {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.x)
+	}
+	if exp := (ProcStat{z:1, n:0}); !reflect.DeepEqual(exp, cpu.p) {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.p)
+	}
+}
+
+func TestDecxyRegY(t *testing.T) {
+	cpu := Cpu{}
+	cpu.y = 1
+
+	cpu.decxy(Y)
+
+	if exp := 0; cpu.y != exp {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.y)
+	}
+	if exp := (ProcStat{z:1, n:0}); !reflect.DeepEqual(exp, cpu.p) {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.p)
+	}
+}
+
+func TestEor(t *testing.T) {
+	var mem Memory
+	cpu := Cpu{mem: &mem}
+
+	cpu.mem.Write(0, 15)
+	cpu.ac = 12
+
+	cpu.eor(0)
+
+	if exp := 3; cpu.ac != exp {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.ac)
+	}
+	if exp := (ProcStat{z:0, n:0}); !reflect.DeepEqual(exp, cpu.p) {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.p)
+	}
+}
+
+func TestInc(t *testing.T) {
+	var mem Memory
+	cpu := Cpu{mem: &mem}
+
+	cpu.mem.Write(0, 255)
+
+	cpu.inc(0)
+	actual := cpu.mem.Read(0)
+
+	if exp := 0; exp != actual {
+		t.Errorf("Expected %+v, got %+v\n", exp, actual)
+	}
+	if exp := (ProcStat{z:1, n:0}); !reflect.DeepEqual(exp, cpu.p) {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.p)
+	}
+}
+
+func TestIncxyRegX(t *testing.T) {
+	cpu := Cpu{}
+	cpu.x = 255
+
+	cpu.incxy(X)
+
+	if exp := 0; cpu.x != exp {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.x)
+	}
+	if exp := (ProcStat{z:1, n:0}); !reflect.DeepEqual(exp, cpu.p) {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.p)
+	}
+}
+
+func TestIncxyRegY(t *testing.T) {
+	cpu := Cpu{}
+	cpu.y = 255
+
+	cpu.incxy(Y)
+
+	if exp := 0; cpu.y != exp {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.y)
+	}
+	if exp := (ProcStat{z:1, n:0}); !reflect.DeepEqual(exp, cpu.p) {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.p)
+	}
+}

@@ -1191,8 +1191,9 @@ func (cpu *Cpu) dec(addr int) {
 	data = (data - 1) & 0xFF
 	cpu.mem.Write(addr, data)
 
-	cpu.p.n = data
-	cpu.p.z = data
+	// Set flags
+	cpu.p.setN(data)
+	cpu.p.setZ(data)
 }
 
 // decrement register
@@ -1200,13 +1201,13 @@ func (cpu *Cpu) decxy(r int) {
 	switch r {
 	case X:
 		cpu.x = (cpu.x - 1) & 0xFF
-		cpu.p.n = cpu.x
-		cpu.p.z = cpu.x
+		cpu.p.setN(cpu.x)
+		cpu.p.setZ(cpu.x)
 
 	case Y:
 		cpu.y = (cpu.y - 1) & 0xFF
-		cpu.p.n = cpu.y
-		cpu.p.z = cpu.y
+		cpu.p.setN(cpu.y)
+		cpu.p.setZ(cpu.y)
 	}
 }
 
@@ -1215,8 +1216,8 @@ func (cpu *Cpu) eor(addr int) {
 	data := cpu.mem.Read(addr)
 
 	cpu.ac ^= data
-	cpu.p.n = cpu.ac
-	cpu.p.z = cpu.ac
+	cpu.p.setN(cpu.ac)
+	cpu.p.setZ(cpu.ac)
 }
 
 // increment memory
@@ -1227,8 +1228,8 @@ func (cpu *Cpu) inc(addr int) {
 	data &= 0xFF
 	cpu.mem.Write(addr, data)
 
-	cpu.p.n = data
-	cpu.p.z = data
+	cpu.p.setN(data)
+	cpu.p.setZ(data)
 }
 
 // increment register
@@ -1236,13 +1237,13 @@ func (cpu *Cpu) incxy(r int) {
 	switch r {
 	case X:
 		cpu.x = (cpu.x + 1) & 0xFF
-		cpu.p.n = cpu.x
-		cpu.p.z = cpu.x
+		cpu.p.setN(cpu.x)
+		cpu.p.setZ(cpu.x)
 
 	case Y:
 		cpu.y = (cpu.y + 1) & 0xFF
-		cpu.p.n = cpu.y
-		cpu.p.z = cpu.y
+		cpu.p.setN(cpu.y)
+		cpu.p.setZ(cpu.y)
 	}
 }
 
