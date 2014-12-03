@@ -826,3 +826,4 @@ func TestNop(t *testing.T) {
 	if !reflect.DeepEqual(cpu, Cpu{}) {
 		t.Errorf("Expected %+v, got %+v\n", cpu, Cpu{})
 	}
+}
