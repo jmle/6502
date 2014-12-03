@@ -749,3 +749,36 @@ func TestLdrWithAc(t *testing.T) {
 		}
 	}
 }
+
+func TestLsra(t *testing.T) {
+	for _, tt := range []struct {
+		name		string
+		ac			int
+		// exp
+		expAc		int
+		expProc		ProcStat
+	} {
+		{name: "With carry set",
+			ac: 15, expAc: 7,
+			expProc: ProcStat{c: 1},
+		},
+		{name: "With carry clear",
+			ac: 14, expAc: 7,
+			expProc: ProcStat{c: 0},
+		},
+	} {
+		cpu := Cpu{}
+		cpu.ac = tt.ac
+
+		cpu.lsra()
+		t.Log(tt.name)
+
+		if tt.expAc != cpu.ac {
+			t.Errorf("Expected %+v, got %+v\n", tt.expAc, cpu.ac)
+		}
+		if !reflect.DeepEqual(tt.expProc, cpu.p) {
+			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
+		}
+
+	}
+}

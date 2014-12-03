@@ -1301,7 +1301,7 @@ func (cpu *Cpu) lsra() {
 	}
 
 	cpu.ac = (cpu.ac >> 1) & 0x7F
-	cpu.p.z = cpu.ac
+	cpu.p.setZ(cpu.ac)
 }
 
 // right shift memory
