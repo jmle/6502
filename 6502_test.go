@@ -817,3 +817,12 @@ func TestLsrm(t *testing.T) {
 
 	}
 }
+
+func TestNop(t *testing.T) {
+	cpu := Cpu{}
+
+	cpu.nop()
+
+	if !reflect.DeepEqual(cpu, Cpu{}) {
+		t.Errorf("Expected %+v, got %+v\n", cpu, Cpu{})
+	}
