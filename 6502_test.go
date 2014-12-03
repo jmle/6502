@@ -782,3 +782,38 @@ func TestLsra(t *testing.T) {
 
 	}
 }
+
+func TestLsrm(t *testing.T) {
+	for _, tt := range []struct {
+		name		string
+		val			int
+		// exp
+		expVal		int
+		expProc		ProcStat
+	} {
+		{name: "With carry set",
+			val: 15, expVal: 7,
+			expProc: ProcStat{c: 1},
+		},
+		{name: "With carry clear",
+			val: 14, expVal: 7,
+			expProc: ProcStat{c: 0},
+		},
+	} {
+		var mem Memory
+		cpu := Cpu{mem: &mem}
+		cpu.mem.Write(0, tt.val)
+
+		cpu.lsrm(0)
+		t.Log(tt.name)
+
+		actualVal := cpu.mem.Read(0)
+		if tt.expVal != actualVal {
+			t.Errorf("Expected %+v, got %+v\n", tt.expVal, actualVal)
+		}
+		if !reflect.DeepEqual(tt.expProc, cpu.p) {
+			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
+		}
+
+	}
+}

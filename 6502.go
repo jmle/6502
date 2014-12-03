@@ -1315,7 +1315,7 @@ func (cpu *Cpu) lsrm(addr int) {
 		cpu.p.c = 1
 	}
 	data = (data >> 1) & 0x7F
-	cpu.p.z = data
+	cpu.p.setZ(data)
 
 	cpu.mem.Write(addr, data)
 }
