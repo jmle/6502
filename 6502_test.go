@@ -237,7 +237,6 @@ func TestBcsWithCarrySet(t *testing.T) {
 	}
 }
 
-// TODO: Unify branch instructions tests
 func TestBeq(t *testing.T) {
 	for _, tt := range []struct {
 		name string
