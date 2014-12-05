@@ -827,3 +827,17 @@ func TestNop(t *testing.T) {
 		t.Errorf("Expected %+v, got %+v\n", cpu, Cpu{})
 	}
 }
+
+func TestOra(t *testing.T) {
+	var mem Memory
+	cpu := Cpu{mem:&mem}
+	cpu.mem.Write(0, 1)
+	cpu.ac = 14
+
+	cpu.ora(0)
+
+	if exp := 15; cpu.ac != exp {
+		t.Errorf("Expected %+v, got %+v\n", exp, cpu.ac)
+	}
+}
+

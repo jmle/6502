@@ -1330,8 +1330,8 @@ func (cpu *Cpu) ora(addr int) {
 	data := cpu.mem.Read(addr)
 
 	cpu.ac |= data
-	cpu.p.n = data
-	cpu.p.z = data
+	cpu.p.setZ(cpu.ac)
+	cpu.p.setN(cpu.ac)
 }
 
 // push accumulator to stack
