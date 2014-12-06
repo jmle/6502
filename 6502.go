@@ -1381,8 +1381,8 @@ func (cpu *Cpu) rola() {
 	// Set the next carry
 	cpu.p.c = t
 	// Set flags
-	cpu.p.z = cpu.ac
-	cpu.p.n = cpu.ac
+	cpu.p.setZ(cpu.ac)
+	cpu.p.setN(cpu.ac)
 }
 
 // rotate memory left

@@ -891,3 +891,61 @@ func TestPla(t *testing.T) {
 	}
 }
 
+func TestPlp(t *testing.T) {
+	var mem Memory
+	procStat := ProcStat{}
+	procStat.setAsWord(223)
+	cpu := Cpu{p:procStat, sp:40, mem:&mem}
+	expSp := 41; expProc := 223;
+	cpu.mem.Write(expSp, procStat.getAsWord())
+
+	cpu.plp()
+
+	if cpu.sp != expSp {
+		t.Errorf("Expected %+v, got %+v\n", expSp, cpu.sp)
+	}
+	if cpu.p.getAsWord() != expProc {
+		t.Errorf("Expected %+v, got %+v\n", expProc, cpu.p.getAsWord())
+	}
+}
+
+func TestRola(t *testing.T) {
+	for _, tt := range []struct {
+		name		string
+		ac			int
+		proc		ProcStat
+		// exp
+		expAc		int
+		expProc		ProcStat
+	} {
+		{name: "With carry bit",
+			ac: 160, expAc: 64,
+			proc: ProcStat{},
+			expProc: ProcStat{c:1},
+		},
+		{name: "Without carry bit",
+			ac: 64, expAc: 128,
+			proc: ProcStat{},
+			expProc: ProcStat{c:0, n:1},
+		},
+		{name: "With carry bit already set",
+			ac: 64, expAc: 129,
+			proc: ProcStat{c:1},
+			expProc: ProcStat{c:0, n:1},
+		},
+	} {
+		cpu := Cpu{}
+		cpu.ac = tt.ac
+		cpu.p = tt.proc
+
+		cpu.rola()
+		t.Log(tt.name)
+
+		if tt.expAc != cpu.ac {
+			t.Errorf("Expected %+v, got %+v\n", tt.expAc, cpu.ac)
+		}
+		if !reflect.DeepEqual(tt.expProc, cpu.p) {
+			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
+		}
+	}
+}
