@@ -1351,8 +1351,8 @@ func (cpu *Cpu) pla() {
 	cpu.sp++
 	cpu.ac = cpu.mem.Read(cpu.sp)
 
-	cpu.p.n = cpu.ac
-	cpu.p.z = cpu.ac
+	cpu.p.setN(cpu.ac)
+	cpu.p.setZ(cpu.ac)
 }
 
 // set push stack to processor status

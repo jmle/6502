@@ -17,6 +17,15 @@ func (m *Memory) Write(addr, value int) {
 	m.memory[addr] = value
 }
 
+func TestGetAsWord(t *testing.T) {
+	procStat := ProcStat{c:1, z:1, i:1, d:1, b:1, v:1, n:1}
+	pstatus := procStat.getAsWord()
+
+	if expProcStat := 223; pstatus != expProcStat {
+		t.Errorf("Expected %+v, got %+v\n", expProcStat, pstatus)
+	}
+}
+
 func TestAdc(t *testing.T) {
 	for _, tt := range []struct {
 		name string
@@ -837,6 +846,48 @@ func TestOra(t *testing.T) {
 
 	if exp := 15; cpu.ac != exp {
 		t.Errorf("Expected %+v, got %+v\n", exp, cpu.ac)
+	}
+}
+
+func TestPha(t *testing.T) {
+	var mem Memory
+	cpu := Cpu{mem:&mem, ac:14, sp:100}
+
+	cpu.pha()
+
+	if expSp := 99; cpu.sp != expSp {
+		t.Errorf("Expected %+v, got %+v\n", expSp, cpu.sp)
+	}
+	if expMemSp := cpu.mem.Read(100); expMemSp != cpu.ac {
+		t.Errorf("Expected %+v, got %+v\n", expMemSp, cpu.ac)
+	}
+}
+
+func TestPhp(t *testing.T) {
+	var mem Memory
+	procStat := ProcStat{}
+	procStat.setAsWord(255)
+	cpu := Cpu{p:procStat, sp:40, mem:&mem}
+
+	cpu.php()
+
+	if expProc := 223; cpu.p.getAsWord() != expProc {
+		t.Errorf("Expected %+v, got %+v\n", expProc, cpu.p.getAsWord())
+	}
+}
+
+func TestPla(t *testing.T) {
+	var mem Memory
+	cpu := Cpu{mem:&mem, sp:40}
+	expAc := 5; mem.Write(41, expAc)
+
+	cpu.pla()
+
+	if cpu.ac != expAc {
+		t.Errorf("Expected %+v, got %+v\n", expAc, cpu.ac)
+	}
+	if cpu.ac != expAc {
+		t.Errorf("Expected %+v, got %+v\n", expAc, cpu.ac)
 	}
 }
 
