@@ -564,19 +564,19 @@ func TestCmp(t *testing.T) {
 			expProc: ProcStat{c:0, n:1, z:0},
 		},
 		{name: "X - set carry",
-			reg: A, ac: 20, data: 10,
+			reg: X, ac: 20, data: 10,
 			expProc: ProcStat{c:1, n:0, z:0},
 		},
 		{name: "X - carry clear",
-			reg: A, ac: 5, data: 10,
+			reg: X, ac: 5, data: 10,
 			expProc: ProcStat{c:0, n:1, z:0},
 		},
 		{name: "Y - set carry",
-			reg: A, ac: 20, data: 10,
+			reg: Y, ac: 20, data: 10,
 			expProc: ProcStat{c:1, n:0, z:0},
 		},
 		{name: "Y - carry clear",
-			reg: A, ac: 5, data: 10,
+			reg: Y, ac: 5, data: 10,
 			expProc: ProcStat{c:0, n:1, z:0},
 		},
 	}{
@@ -949,3 +949,47 @@ func TestRola(t *testing.T) {
 		}
 	}
 }
+
+func TestRolm(t *testing.T) {
+	for _, tt := range []struct {
+		name		string
+		val			int
+		proc		ProcStat
+		// exp
+		expVal		int
+		expProc		ProcStat
+	} {
+		{name: "With carry bit",
+			val: 160, expVal: 64,
+			proc: ProcStat{},
+			expProc: ProcStat{c:1},
+		},
+		{name: "Without carry bit",
+			val: 64, expVal: 128,
+			proc: ProcStat{},
+			expProc: ProcStat{c:0, n:1},
+		},
+		{name: "With carry bit already set",
+			val: 64, expVal: 129,
+			proc: ProcStat{c:1},
+			expProc: ProcStat{c:0, n:1},
+		},
+	} {
+		var mem Memory
+		cpu := Cpu{mem:&mem}
+		cpu.p = tt.proc
+		cpu.mem.Write(0, tt.val)
+
+		cpu.rolm(0)
+		t.Log(tt.name)
+
+		if actVal := cpu.mem.Read(0); tt.expVal != actVal {
+			t.Errorf("Expected %+v, got %+v\n", tt.expVal, actVal)
+		}
+		if !reflect.DeepEqual(tt.expProc, cpu.p) {
+			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
+		}
+	}
+}
+
+

@@ -1402,8 +1402,8 @@ func (cpu *Cpu) rolm(addr int) {
 	// Set the next carry
 	cpu.p.c = t
 	// Set flags
-	cpu.p.z = data
-	cpu.p.n = data
+	cpu.p.setZ(data)
+	cpu.p.setN(data)
 
 	// Write to memory
 	cpu.mem.Write(addr, data)
