@@ -1472,12 +1472,12 @@ func (cpu *Cpu) rorm(addr int) {
 // return from interrupt
 func (cpu *Cpu) rti() {
 	var l, h int
-
-	cpu.sp--
+	// TODO: increment or decrement sp?
+	cpu.sp++
 	cpu.p.setAsWord(cpu.mem.Read(cpu.sp))
-	cpu.sp--
+	cpu.sp++
 	l = cpu.mem.Read(cpu.sp)
-	cpu.sp--
+	cpu.sp++
 	h = cpu.mem.Read(cpu.sp)
 
 	cpu.pc = (h << 8) | l

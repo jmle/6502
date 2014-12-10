@@ -1076,4 +1076,28 @@ func TestRorm(t *testing.T) {
 	}
 }
 
+func TestRti(t *testing.T) {
+	var mem Memory
+	cpu := Cpu{mem:&mem}
+	sp := 100; cpu.sp = sp
 
+	cpu.mem.Write(cpu.sp+1, 0xFF)
+	cpu.mem.Write(cpu.sp+2, 0x10)
+	cpu.mem.Write(cpu.sp+3, 0x10)
+
+	cpu.rti()
+
+	if expSp := sp+3; cpu.sp != expSp {
+		t.Errorf("Expected %+v, got %+v\n", expSp, cpu.sp)
+	}
+	if expProc := 223; cpu.p.getAsWord() != expProc {
+		t.Errorf("Expected %+v, got %+v\n", expProc, cpu.p.getAsWord())
+	}
+	if expPc := 0x1010; cpu.pc != expPc {
+		t.Errorf("Expected %+v, got %+v\n", expPc, cpu.pc)
+	}
+}
+
+func TestRts(t *testing.T) {
+
+}
