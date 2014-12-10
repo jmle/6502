@@ -551,6 +551,7 @@ func TestCmp(t *testing.T) {
 	for _, tt := range []struct {
 		name		string
 		reg, ac		int
+		x, y		int
 		data		int
 		// Expected
 		expProc		ProcStat
@@ -564,24 +565,24 @@ func TestCmp(t *testing.T) {
 			expProc: ProcStat{c:0, n:1, z:0},
 		},
 		{name: "X - set carry",
-			reg: X, ac: 20, data: 10,
+			reg: X, x: 20, data: 10,
 			expProc: ProcStat{c:1, n:0, z:0},
 		},
 		{name: "X - carry clear",
-			reg: X, ac: 5, data: 10,
+			reg: X, x: 5, data: 10,
 			expProc: ProcStat{c:0, n:1, z:0},
 		},
 		{name: "Y - set carry",
-			reg: Y, ac: 20, data: 10,
+			reg: Y, y: 20, data: 10,
 			expProc: ProcStat{c:1, n:0, z:0},
 		},
 		{name: "Y - carry clear",
-			reg: Y, ac: 5, data: 10,
+			reg: Y, y: 5, data: 10,
 			expProc: ProcStat{c:0, n:1, z:0},
 		},
 	}{
 		var mem Memory
-		cpu := Cpu{ac: tt.ac}
+		cpu := Cpu{ac: tt.ac, x: tt.x, y: tt.y}
 		cpu.mem = &mem
 		mem.Write(0, tt.data)
 
