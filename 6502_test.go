@@ -1099,5 +1099,21 @@ func TestRti(t *testing.T) {
 }
 
 func TestRts(t *testing.T) {
+	var mem Memory
+	cpu := Cpu{mem:&mem}
+	sp := 100; cpu.sp = sp
 
+	cpu.mem.Write(cpu.sp+1, 0x10)
+	cpu.mem.Write(cpu.sp+2, 0x10)
+
+	cpu.rts()
+
+	if expPc := 0x1011; cpu.pc != expPc {
+		t.Errorf("Expected %+v, got %+v\n", expPc, cpu.pc)
+	}
+	if expSp := sp+2; cpu.sp != expSp {
+		t.Errorf("Expected %+v, got %+v\n", expSp, cpu.sp)
+	}
 }
+
+
