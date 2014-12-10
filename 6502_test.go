@@ -1034,3 +1034,46 @@ func TestRora(t *testing.T) {
 	}
 }
 
+func TestRorm(t *testing.T) {
+	for _, tt := range []struct {
+		name		string
+		val			int
+		proc		ProcStat
+		// exp
+		expVal		int
+		expProc		ProcStat
+	} {
+		{name: "With carry bit",
+			val: 65, expVal: 32,
+			proc: ProcStat{},
+			expProc: ProcStat{c:1},
+		},
+		{name: "Without carry bit",
+			val: 64, expVal: 32,
+			proc: ProcStat{},
+			expProc: ProcStat{},
+		},
+		{name: "With carry bit already set",
+			val: 16, expVal: 0x88,
+			proc: ProcStat{c:1},
+			expProc: ProcStat{c:0, n:1},
+		},
+	} {
+		var mem Memory
+		cpu := Cpu{mem:&mem}
+		cpu.p = tt.proc
+		cpu.mem.Write(0, tt.val)
+
+		cpu.rorm(0)
+		t.Log(tt.name)
+
+		if actVal := cpu.mem.Read(0); tt.expVal != actVal {
+			t.Errorf("Expected %+v, got %+v\n", tt.expVal, actVal)
+		}
+		if !reflect.DeepEqual(tt.expProc, cpu.p) {
+			t.Errorf("Expected %+v, got %+v\n", tt.expProc, cpu.p)
+		}
+	}
+}
+
+
