@@ -954,12 +954,17 @@ func (cpu *Cpu) adc(addr int) {
 		aux := cpu.ac + data + cpu.p.c
 
 		// Set flags: overflow, sign, zero, and carry
-		overflow := ((cpu.ac & BIT_7) != (aux & BIT_7))
-		if overflow {
+		// If the sum of two positive numbers yields a negative result,
+		// it has overflowed. If the sum of two negative numbers
+		// yields a positive result, it has overflowed.
+		isAcPos := cpu.ac & BIT_7 == 0
+		isDataPos := data & BIT_7 == 0
+		isResPos := aux & BIT_7 == 0
+		if (isAcPos && isDataPos && !isResPos) ||
+		   (!isAcPos && !isDataPos && isResPos) {
 			cpu.p.v = 1
-		} else {
-			cpu.p.v = 0
 		}
+
 		cpu.p.setN(aux)
 		cpu.p.setZ(aux)
 
@@ -1506,7 +1511,7 @@ func (cpu *Cpu) sbc(addr int) {
 		// before. This is to make sure that, if we need to borrow, there is
 		// something to borrow.
 		var negcarry int
-		if cpu.p.c&BIT_0 != 0 {
+		if cpu.p.c == 1 {
 			negcarry = 0
 		} else {
 			negcarry = 1
@@ -1520,17 +1525,21 @@ func (cpu *Cpu) sbc(addr int) {
 		}
 	} else {
 		var negcarry int
-		if cpu.p.c&BIT_0 != 0 {
+		if cpu.p.c != 0 {
 			negcarry = 0
 		} else {
 			negcarry = 1
 		}
 		t = cpu.ac - data - negcarry
 
-		if t > 127 || t < -128 {
+		// Sign changed when substracing numbers with opposite
+		// sign yields overflow.
+		isAcPos := cpu.ac & BIT_7 == 0
+		isDataPos := data & BIT_7 == 0
+		isResPos := t & BIT_7 == 0
+		if (isAcPos && !isDataPos && !isResPos) ||
+		   (!isAcPos && isDataPos && isResPos) {
 			cpu.p.v = 1
-		} else {
-			cpu.p.v = 0
 		}
 	}
 
@@ -1540,8 +1549,8 @@ func (cpu *Cpu) sbc(addr int) {
 	} else {
 		cpu.p.c = 0
 	}
-	cpu.p.n = t
-	cpu.p.z = t
+	cpu.p.setZ(t)
+	cpu.p.setN(t)
 
 	// Write the result (ANDed, just in case it overflowed)
 	cpu.ac = t & 0xFF
